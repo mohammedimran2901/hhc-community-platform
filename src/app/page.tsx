@@ -3,7 +3,7 @@ import { ArrowRight, MessageSquare, Bell, Users } from 'lucide-react';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50">
+    <div className="min-h-screen">
       {/* Navbar */}
       <nav className="border-b border-gray-200 bg-white/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -32,30 +32,39 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+      {/* Hero Section with Background Image */}
+      <section className="relative pt-20 pb-20 px-4 min-h-[600px] flex items-center">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/hero-bg.png')" }}
+        />
+        {/* Overlay for readability */}
+        <div className="absolute inset-0 bg-white/30" />
+
+        {/* Content */}
+        <div className="relative max-w-4xl mx-auto text-center z-10">
+          <div className="inline-flex items-center gap-2 bg-blue-600/90 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-6 backdrop-blur-sm">
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
             Powered by Health Holding Company
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
             HHC Clinical Costing Community
           </h1>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10">
+          <p className="text-lg sm:text-xl text-gray-700 max-w-2xl mx-auto mb-10 font-medium">
             A platform for clinical costing professionals across Saudi Arabia's 20 health clusters
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/auth/register"
-              className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-semibold text-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-semibold text-lg transition-colors shadow-lg"
             >
               Get Started
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
               href="/auth/login"
-              className="inline-flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 px-8 py-3 rounded-xl hover:border-gray-300 font-semibold text-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-white/90 text-gray-700 px-8 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 font-semibold text-lg transition-colors backdrop-blur-sm"
             >
               Sign In
             </Link>
@@ -101,7 +110,7 @@ export default function LandingPage() {
       </section>
 
       {/* Demo Quick Links */}
-      <section className="py-16 px-4">
+      <section className="py-16 px-4 bg-gray-50">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-8">Explore the Platform</h2>
           <div className="flex flex-wrap justify-center gap-4">
