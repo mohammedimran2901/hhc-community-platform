@@ -67,7 +67,7 @@ export default function LandingPage() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-2xl border border-gray-100 hover:border-blue-100 hover:shadow-lg transition-all">
+            <Link href="/dashboard" className="p-8 rounded-2xl border border-gray-100 hover:border-blue-100 hover:shadow-lg transition-all">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
                 <Bell className="w-6 h-6 text-blue-600" />
               </div>
@@ -75,9 +75,9 @@ export default function LandingPage() {
               <p className="text-gray-600 leading-relaxed">
                 Stay updated with the latest guidance and communications from the Health Holding Company.
               </p>
-            </div>
+            </Link>
 
-            <div className="p-8 rounded-2xl border border-gray-100 hover:border-emerald-100 hover:shadow-lg transition-all">
+            <Link href="/forum" className="p-8 rounded-2xl border border-gray-100 hover:border-emerald-100 hover:shadow-lg transition-all">
               <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-4">
                 <MessageSquare className="w-6 h-6 text-emerald-600" />
               </div>
@@ -85,9 +85,9 @@ export default function LandingPage() {
               <p className="text-gray-600 leading-relaxed">
                 Ask questions, share knowledge, and collaborate with colleagues across all 20 clusters.
               </p>
-            </div>
+            </Link>
 
-            <div className="p-8 rounded-2xl border border-gray-100 hover:border-purple-100 hover:shadow-lg transition-all">
+            <Link href="/clusters" className="p-8 rounded-2xl border border-gray-100 hover:border-purple-100 hover:shadow-lg transition-all">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
                 <Users className="w-6 h-6 text-purple-600" />
               </div>
@@ -95,7 +95,31 @@ export default function LandingPage() {
               <p className="text-gray-600 leading-relaxed">
                 Connect with costing leads and teams across all health clusters in Saudi Arabia.
               </p>
-            </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Demo Quick Links */}
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8">Explore the Platform</h2>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link href="/dashboard" className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 font-medium transition-colors">
+              Dashboard
+            </Link>
+            <Link href="/announcements" className="inline-flex items-center gap-2 bg-white text-gray-700 px-6 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 font-medium transition-colors">
+              Announcements
+            </Link>
+            <Link href="/forum" className="inline-flex items-center gap-2 bg-white text-gray-700 px-6 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 font-medium transition-colors">
+              Forum
+            </Link>
+            <Link href="/clusters" className="inline-flex items-center gap-2 bg-white text-gray-700 px-6 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 font-medium transition-colors">
+              Clusters
+            </Link>
+            <Link href="/profile" className="inline-flex items-center gap-2 bg-white text-gray-700 px-6 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 font-medium transition-colors">
+              Profile
+            </Link>
           </div>
         </div>
       </section>
