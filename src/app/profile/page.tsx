@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { getClient } from '@/lib/supabase/client-lazy';
 import { User, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
-  const supabase = createClient();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -14,6 +13,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function loadProfile() {
+      const supabase = await getClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push('/auth/login');
@@ -31,7 +31,7 @@ export default function ProfilePage() {
       setLoading(false);
     }
     loadProfile();
-  }, [supabase, router]);
+  }, [router]);
 
   if (loading) {
     return (

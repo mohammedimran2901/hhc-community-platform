@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { getClient } from '@/lib/supabase/client-lazy';
 import { LayoutDashboard, Bell, MessageSquare, Users, User, LogOut, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -17,21 +17,23 @@ const navItems = [
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClient();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [username, setUsername] = useState('');
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.user_metadata?.full_name) {
-        setUsername(data.user.user_metadata.full_name);
-      } else if (data.user?.email) {
-        setUsername(data.user.email);
-      }
+    getClient().then((supabase) => {
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user?.user_metadata?.full_name) {
+          setUsername(data.user.user_metadata.full_name as string);
+        } else if (data.user?.email) {
+          setUsername(data.user.email);
+        }
+      });
     });
-  }, [supabase]);
+  }, []);
 
   const handleLogout = async () => {
+    const supabase = await getClient();
     await supabase.auth.signOut();
     router.push('/');
     router.refresh();
