@@ -1,13 +1,20 @@
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
 import { Plus, MessageSquare, ArrowRight, Search } from 'lucide-react';
 
 export default async function ForumPage() {
-  const supabase = await createClient();
-  const { data: threads } = await supabase
-    .from('forum_threads')
-    .select('*, author:author_id(full_name), cluster:cluster_id(name_en)')
-    .order('created_at', { ascending: false });
+  let threads: any[] = [];
+
+  try {
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('forum_threads')
+      .select('*, author:author_id(full_name), cluster:cluster_id(name_en)')
+      .order('created_at', { ascending: false });
+    if (data) threads = data;
+  } catch {
+    // Supabase not configured
+  }
 
   return (
     <div className="space-y-6">
@@ -25,7 +32,6 @@ export default async function ForumPage() {
         </Link>
       </div>
 
-      {/* Search (UI only for now) */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
@@ -36,9 +42,9 @@ export default async function ForumPage() {
         />
       </div>
 
-      {threads && threads.length > 0 ? (
+      {threads.length > 0 ? (
         <div className="space-y-3">
-          {threads.map((t) => (
+          {threads.map((t: any) => (
             <Link
               key={t.id}
               href={`/forum/${t.id}`}
@@ -50,9 +56,7 @@ export default async function ForumPage() {
                     <MessageSquare className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                     <h2 className="font-semibold text-gray-900 truncate">{t.title}</h2>
                     {t.is_resolved && (
-                      <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                        Resolved
-                      </span>
+                      <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Resolved</span>
                     )}
                   </div>
                   <p className="text-sm text-gray-500 line-clamp-1">{t.content}</p>
@@ -71,10 +75,7 @@ export default async function ForumPage() {
         <div className="text-center py-20 bg-white rounded-xl border border-gray-200">
           <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">No threads yet. Start the first discussion!</p>
-          <Link
-            href="/forum/new"
-            className="inline-flex items-center gap-2 mt-4 text-blue-600 hover:text-blue-700 font-medium"
-          >
+          <Link href="/forum/new" className="inline-flex items-center gap-2 mt-4 text-blue-600 hover:text-blue-700 font-medium">
             <Plus className="w-4 h-4" />
             Create Thread
           </Link>

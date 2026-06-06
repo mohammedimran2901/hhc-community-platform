@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
 import { ArrowLeft } from 'lucide-react';
 
 export default async function AnnouncementDetailPage({
@@ -9,12 +8,20 @@ export default async function AnnouncementDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: announcement } = await supabase
-    .from('announcements')
-    .select('*, author:author_id(full_name)')
-    .eq('id', id)
-    .single();
+  let announcement: any = null;
+
+  try {
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('announcements')
+      .select('*, author:author_id(full_name)')
+      .eq('id', id)
+      .single();
+    announcement = data;
+  } catch {
+    // Supabase not configured
+  }
 
   if (!announcement) notFound();
 

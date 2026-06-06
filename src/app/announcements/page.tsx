@@ -1,14 +1,21 @@
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
 import { Plus, ArrowRight } from 'lucide-react';
 
 export default async function AnnouncementsPage() {
-  const supabase = await createClient();
-  const { data: announcements } = await supabase
-    .from('announcements')
-    .select('*, author:author_id(full_name)')
-    .order('is_pinned', { ascending: false })
-    .order('created_at', { ascending: false });
+  let announcements: any[] = [];
+
+  try {
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('announcements')
+      .select('*, author:author_id(full_name)')
+      .order('is_pinned', { ascending: false })
+      .order('created_at', { ascending: false });
+    if (data) announcements = data;
+  } catch {
+    // Supabase not configured
+  }
 
   const categoryColors: Record<string, string> = {
     guidance: 'bg-blue-100 text-blue-700',
@@ -33,9 +40,9 @@ export default async function AnnouncementsPage() {
         </Link>
       </div>
 
-      {announcements && announcements.length > 0 ? (
+      {announcements.length > 0 ? (
         <div className="space-y-4">
-          {announcements.map((a) => (
+          {announcements.map((a: any) => (
             <Link
               key={a.id}
               href={`/announcements/${a.id}`}
@@ -44,16 +51,10 @@ export default async function AnnouncementsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        categoryColors[a.category] || 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categoryColors[a.category] || 'bg-gray-100 text-gray-700'}`}>
                       {a.category}
                     </span>
-                    {a.is_pinned && (
-                      <span className="text-xs font-medium text-amber-600">📌 Pinned</span>
-                    )}
+                    {a.is_pinned && <span className="text-xs font-medium text-amber-600">📌 Pinned</span>}
                   </div>
                   <h2 className="text-lg font-semibold text-gray-900 truncate">{a.title}</h2>
                   <p className="text-sm text-gray-500 mt-1 line-clamp-2">{a.content}</p>
