@@ -1,20 +1,46 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getStoredThreads } from '@/lib/local-data';
 import { Plus, MessageSquare, ArrowRight, Search } from 'lucide-react';
 
-export default async function ForumPage() {
-  let threads: any[] = [];
+export default function ForumPage() {
+  const [threads, setThreads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  try {
-    const { createClient } = await import('@/lib/supabase/server');
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from('forum_threads')
-      .select('*, author:author_id(full_name), cluster:cluster_id(name_en)')
-      .order('created_at', { ascending: false });
-    if (data) threads = data;
-  } catch {
-    // Supabase not configured
-  }
+  useEffect(() => {
+    // Get local threads from localStorage
+    const local = getStoredThreads();
+    setThreads(local);
+    setLoading(false);
+
+    // Also try fetching from Supabase if configured
+    async function fetchSupabase() {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('forum_threads')
+          .select('*, author:author_id(full_name), cluster:cluster_id(name_en)')
+          .order('created_at', { ascending: false });
+        if (data && data.length > 0) {
+          const mapped = data.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            content: t.content,
+            author: t.author?.full_name || 'Unknown',
+            clusterName: t.cluster?.name_en || null,
+            is_resolved: t.is_resolved,
+            created_at: t.created_at,
+          }));
+          // Merge: local first, then Supabase
+          setThreads([...local, ...mapped.filter((m: any) => !local.find((l: any) => l.id === m.id))]);
+        }
+      } catch {}
+    }
+    fetchSupabase();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -42,7 +68,9 @@ export default async function ForumPage() {
         />
       </div>
 
-      {threads.length > 0 ? (
+      {loading ? (
+        <div className="text-center py-10"><p className="text-gray-500">Loading...</p></div>
+      ) : threads.length > 0 ? (
         <div className="space-y-3">
           {threads.map((t: any) => (
             <Link
@@ -65,8 +93,8 @@ export default async function ForumPage() {
               </div>
               <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
                 <span>{new Date(t.created_at).toLocaleDateString()}</span>
-                {t.author && <span>{t.author.full_name}</span>}
-                {t.cluster && <span>📍 {t.cluster.name_en}</span>}
+                <span>{t.author}</span>
+                {t.clusterName && <span>📍 {t.clusterName}</span>}
               </div>
             </Link>
           ))}

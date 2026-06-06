@@ -1,28 +1,51 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getStoredAnnouncements } from '@/lib/local-data';
 import { Plus, ArrowRight } from 'lucide-react';
 
-export default async function AnnouncementsPage() {
-  let announcements: any[] = [];
+const categoryColors: Record<string, string> = {
+  guidance: 'bg-blue-100 text-blue-700',
+  update: 'bg-emerald-100 text-emerald-700',
+  training: 'bg-purple-100 text-purple-700',
+  policy: 'bg-amber-100 text-amber-700',
+};
 
-  try {
-    const { createClient } = await import('@/lib/supabase/server');
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from('announcements')
-      .select('*, author:author_id(full_name)')
-      .order('is_pinned', { ascending: false })
-      .order('created_at', { ascending: false });
-    if (data) announcements = data;
-  } catch {
-    // Supabase not configured
-  }
+export default function AnnouncementsPage() {
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const categoryColors: Record<string, string> = {
-    guidance: 'bg-blue-100 text-blue-700',
-    update: 'bg-emerald-100 text-emerald-700',
-    training: 'bg-purple-100 text-purple-700',
-    policy: 'bg-amber-100 text-amber-700',
-  };
+  useEffect(() => {
+    const local = getStoredAnnouncements();
+    setAnnouncements(local);
+    setLoading(false);
+
+    async function fetchSupabase() {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('announcements')
+          .select('*, author:author_id(full_name)')
+          .order('is_pinned', { ascending: false })
+          .order('created_at', { ascending: false });
+        if (data && data.length > 0) {
+          const mapped = data.map((a: any) => ({
+            id: a.id,
+            title: a.title,
+            content: a.content,
+            author: a.author?.full_name || 'HHC',
+            category: a.category,
+            is_pinned: a.is_pinned,
+            created_at: a.created_at,
+          }));
+          setAnnouncements([...local, ...mapped.filter((m: any) => !local.find((l: any) => l.id === m.id))]);
+        }
+      } catch {}
+    }
+    fetchSupabase();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -40,14 +63,12 @@ export default async function AnnouncementsPage() {
         </Link>
       </div>
 
-      {announcements.length > 0 ? (
+      {loading ? (
+        <div className="text-center py-10"><p className="text-gray-500">Loading...</p></div>
+      ) : announcements.length > 0 ? (
         <div className="space-y-4">
           {announcements.map((a: any) => (
-            <Link
-              key={a.id}
-              href={`/announcements/${a.id}`}
-              className="block bg-white rounded-xl border border-gray-200 p-6 hover:border-blue-200 hover:shadow-sm transition-all"
-            >
+            <div key={a.id} className="block bg-white rounded-xl border border-gray-200 p-6 hover:border-blue-200 hover:shadow-sm transition-all">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
@@ -63,9 +84,9 @@ export default async function AnnouncementsPage() {
               </div>
               <div className="flex items-center gap-4 mt-4 text-xs text-gray-400">
                 <span>{new Date(a.created_at).toLocaleDateString()}</span>
-                {a.author && <span>By {a.author.full_name}</span>}
+                <span>By {a.author || 'HHC'}</span>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       ) : (
