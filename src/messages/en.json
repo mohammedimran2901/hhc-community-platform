@@ -1,0 +1,85 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "announcements": "Announcements",
+    "forum": "Forum",
+    "clusters": "Clusters",
+    "profile": "Profile",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "newAnnouncement": "New Announcement",
+    "newThread": "New Thread"
+  },
+  "auth": {
+    "loginTitle": "Sign in to your account",
+    "registerTitle": "Create your account",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full Name",
+    "selectCluster": "Select your cluster",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "registerLink": "Register here",
+    "loginLink": "Sign in here",
+    "verificationSent": "Verification email sent! Please check your inbox.",
+    "verifyEmail": "Verify your email address",
+    "verifyDescription": "We've sent a verification link to your email. Click it to activate your account.",
+    "forgotPassword": "Forgot password?",
+    "sendReset": "Send Reset Link",
+    "backToLogin": "Back to login"
+  },
+  "home": {
+    "title": "HHC Clinical Costing Community",
+    "subtitle": "A platform for clinical costing professionals across Saudi Arabia's 20 health clusters",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "features": {
+      "announcements": "HHC Announcements & Guidance",
+      "announcementsDesc": "Stay updated with the latest guidance and communications from the Health Holding Company.",
+      "forum": "Community Forum",
+      "forumDesc": "Ask questions, share knowledge, and collaborate with colleagues across all 20 clusters.",
+      "clusters": "20 Clusters Directory",
+      "clustersDesc": "Connect with costing leads and teams across all health clusters in Saudi Arabia."
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome to HHC Costing Community",
+    "welcomeDesc": "Your central hub for clinical costing collaboration",
+    "recentAnnouncements": "Recent Announcements",
+    "recentForumActivity": "Recent Forum Activity",
+    "viewAll": "View All",
+    "noAnnouncements": "No announcements yet",
+    "noThreads": "No forum threads yet"
+  },
+  "announcements": {
+    "title": "Announcements & Guidance",
+    "newAnnouncement": "New Announcement",
+    "editAnnouncement": "Edit Announcement",
+    "delete": "Delete",
+    "confirmDelete": "Are you sure you want to delete this announcement?",
+    "categories": {
+      "guidance": "Guidance",
+      "update": "Update",
+      "training": "Training",
+      "policy": "Policy"
+    }
+  },
+  "forum": {
+    "title": "Community Forum",
+    "newThread": "New Thread",
+    "reply": "Reply",
+    "resolved": "Resolved",
+    "markResolved": "Mark as resolved",
+    "noReplies": "No replies yet. Be the first to respond!",
+    "searchThreads": "Search threads..."
+  },
+  "clusters": {
+    "title": "Health Clusters Directory",
+    "members": "Members",
+    "noMembers": "No members assigned yet"
+  }
+}
