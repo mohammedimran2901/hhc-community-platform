@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Lock, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

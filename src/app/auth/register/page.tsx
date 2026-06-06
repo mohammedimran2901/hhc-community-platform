@@ -8,7 +8,7 @@ import { UserPlus, Loader2 } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
