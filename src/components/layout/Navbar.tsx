@@ -20,6 +20,7 @@ export function Navbar() {
   const [username, setUsername] = useState('');
 
   useEffect(() => {
+    setUsername('Demo User');
     getClient().then((supabase) => {
       supabase.auth.getUser().then(({ data }) => {
         if (data.user?.user_metadata?.full_name) {
@@ -27,13 +28,15 @@ export function Navbar() {
         } else if (data.user?.email) {
           setUsername(data.user.email);
         }
-      });
-    });
+      }).catch(() => {});
+    }).catch(() => {});
   }, []);
 
   const handleLogout = async () => {
-    const supabase = await getClient();
-    await supabase.auth.signOut();
+    try {
+      const supabase = await getClient();
+      await supabase.auth.signOut();
+    } catch {}
     router.push('/');
     router.refresh();
   };

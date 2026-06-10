@@ -16,16 +16,10 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-4">
               <Link
-                href="/auth/login"
-                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                href="/dashboard"
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 font-medium transition-colors"
               >
-                Sign in
-              </Link>
-              <Link
-                href="/auth/register"
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
-              >
-                Get Started
+                Demo Mode
               </Link>
             </div>
           </div>
@@ -56,19 +50,14 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/auth/register"
-              className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-semibold text-lg transition-colors shadow-lg"
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-3 rounded-xl hover:bg-emerald-700 font-semibold text-lg transition-colors shadow-lg"
             >
-              Get Started
+              ⚡ Demo Mode — Enter App
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link
-              href="/auth/login"
-              className="inline-flex items-center justify-center gap-2 bg-white/90 text-gray-700 px-8 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 font-semibold text-lg transition-colors backdrop-blur-sm"
-            >
-              Sign In
-            </Link>
           </div>
+          <p className="text-sm text-gray-500 mt-4">No sign-up required — explore with seeded clinical costing data</p>
         </div>
       </section>
 
