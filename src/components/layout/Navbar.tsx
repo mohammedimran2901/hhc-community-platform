@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { getClient } from '@/lib/supabase/client-lazy';
-import { LayoutDashboard, Bell, MessageSquare, Users, User, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Bell, MessageSquare, Users, User, LogOut, Menu, X, Vote, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const navItems = [
@@ -11,7 +11,6 @@ const navItems = [
   { href: '/announcements', label: 'Announcements', icon: Bell },
   { href: '/forum', label: 'Forum', icon: MessageSquare },
   { href: '/clusters', label: 'Clusters', icon: Users },
-  { href: '/profile', label: 'Profile', icon: User },
 ];
 
 export function Navbar() {
@@ -72,11 +71,27 @@ export function Navbar() {
                 </Link>
               );
             })}
+
+            {/* Admin Link */}
+            <Link
+              href="/admin"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                pathname.startsWith('/admin')
+                  ? 'bg-red-50 text-red-700'
+                  : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+              }`}
+            >
+              <Shield className="w-4 h-4" />
+              <span className="hidden xl:inline">Admin</span>
+            </Link>
           </div>
 
           {/* Right side */}
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500 hidden sm:block">{username}</span>
+            <Link href="/profile" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+              <User className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-500 hidden sm:block">{username || 'Profile'}</span>
+            </Link>
             <button
               onClick={handleLogout}
               className="hidden md:flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -116,6 +131,24 @@ export function Navbar() {
                 </Link>
               );
             })}
+            <Link
+              href="/admin"
+              onClick={() => setMobileOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                pathname.startsWith('/admin') ? 'bg-red-50 text-red-700' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+              }`}
+            >
+              <Shield className="w-4 h-4" />
+              Admin Panel
+            </Link>
+            <Link
+              href="/profile"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+            >
+              <User className="w-4 h-4" />
+              Profile
+            </Link>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors"

@@ -54,4 +54,37 @@ export interface ForumReply {
   created_at: string;
 }
 
+export interface Poll {
+  id: string;
+  question: string;
+  description: string;
+  author_id: string;
+  author?: Profile;
+  cluster_id: string | null;
+  is_active: boolean;
+  ends_at: string | null;
+  created_at: string;
+}
+
+export interface PollOption {
+  id: string;
+  poll_id: string;
+  text: string;
+  sort_order: number;
+}
+
+export interface PollVote {
+  id: string;
+  poll_id: string;
+  option_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface PollWithOptions extends Poll {
+  options: PollOption[];
+  total_votes: number;
+  user_vote_option_id?: string | null;
+}
+
 export type UserRole = 'member' | 'cluster_lead' | 'hhc_admin';

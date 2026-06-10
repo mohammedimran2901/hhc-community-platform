@@ -155,7 +155,76 @@ CREATE POLICY "Replies are publicly readable"
 CREATE POLICY "Authenticated users can reply"
   ON forum_replies FOR INSERT WITH CHECK (auth.uid() = author_id);
 
--- 9. Enable real-time for forum tables
+-- 9. Create polls table
+CREATE TABLE IF NOT EXISTS polls (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  question TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  author_id UUID REFERENCES profiles(id) NOT NULL,
+  cluster_id TEXT REFERENCES clusters(id),
+  is_active BOOLEAN DEFAULT true,
+  ends_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE polls ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Polls are publicly readable"
+  ON polls FOR SELECT USING (true);
+
+CREATE POLICY "HHC admins can create polls"
+  ON polls FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'hhc_admin')
+  );
+
+CREATE POLICY "HHC admins can update polls"
+  ON polls FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'hhc_admin')
+  );
+
+-- 10. Create poll options table
+CREATE TABLE IF NOT EXISTS poll_options (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  poll_id UUID REFERENCES polls(id) ON DELETE CASCADE NOT NULL,
+  text TEXT NOT NULL,
+  sort_order INTEGER DEFAULT 1
+);
+
+ALTER TABLE poll_options ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Poll options are publicly readable"
+  ON poll_options FOR SELECT USING (true);
+
+CREATE POLICY "HHC admins can manage options"
+  ON poll_options FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'hhc_admin')
+  );
+
+-- 11. Create poll votes table
+CREATE TABLE IF NOT EXISTS poll_votes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  poll_id UUID REFERENCES polls(id) ON DELETE CASCADE NOT NULL,
+  option_id UUID REFERENCES poll_options(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES profiles(id) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(poll_id, user_id)
+);
+
+ALTER TABLE poll_votes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can see all votes"
+  ON poll_votes FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can vote"
+  ON poll_votes FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can change own vote"
+  ON poll_votes FOR UPDATE USING (auth.uid() = user_id);
+
+-- 12. Enable real-time for all tables
 ALTER PUBLICATION supabase_realtime ADD TABLE forum_threads;
 ALTER PUBLICATION supabase_realtime ADD TABLE forum_replies;
 ALTER PUBLICATION supabase_realtime ADD TABLE announcements;
+ALTER PUBLICATION supabase_realtime ADD TABLE polls;
+ALTER PUBLICATION supabase_realtime ADD TABLE poll_options;
+ALTER PUBLICATION supabase_realtime ADD TABLE poll_votes;
