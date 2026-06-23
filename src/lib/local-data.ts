@@ -61,7 +61,7 @@ const THREADS_KEY = 'hhc-demo-threads';
 const REPLIES_KEY = 'hhc-demo-replies';
 const POLLS_KEY = 'hhc-demo-polls';
 const VOTES_KEY = 'hhc-demo-votes';
-const SEEDED_KEY = 'hhc-demo-seeded';
+const SEEDED_KEY = 'hhc-demo-seeded-v2'; // bumped to force clean re-seed
 
 function generateId(): string {
   return 'demo-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 7);
