@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, MessageSquare, Bell, Users } from 'lucide-react';
+import { ArrowRight, MessageSquare, Bell, Users, PlayCircle } from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -16,27 +16,30 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-4">
               <Link
+                href="/how-to-use"
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
+              >
+                How to Use
+              </Link>
+              <Link
                 href="/dashboard"
                 className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 font-medium transition-colors"
               >
-                Demo Mode
+                Enter Platform
               </Link>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section with Background Image */}
+      {/* Hero Section */}
       <section className="relative pt-20 pb-20 px-4 min-h-[600px] flex items-center">
-        {/* Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/hero-bg.png')" }}
         />
-        {/* Overlay for readability */}
         <div className="absolute inset-0 bg-white/30" />
 
-        {/* Content */}
         <div className="relative max-w-4xl mx-auto text-center z-10">
           <div className="inline-flex items-center gap-2 bg-blue-600/90 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-6 backdrop-blur-sm">
             <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
@@ -53,11 +56,17 @@ export default function LandingPage() {
               href="/dashboard"
               className="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-3 rounded-xl hover:bg-emerald-700 font-semibold text-lg transition-colors shadow-lg"
             >
-              ⚡ Demo Mode — Enter App
+              Enter the Platform
               <ArrowRight className="w-5 h-5" />
             </Link>
+            <Link
+              href="/how-to-use"
+              className="inline-flex items-center justify-center gap-2 bg-white text-gray-700 px-8 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 font-semibold text-lg transition-colors shadow-sm"
+            >
+              <PlayCircle className="w-5 h-5" />
+              How to Use
+            </Link>
           </div>
-          <p className="text-sm text-gray-500 mt-4">No sign-up required — explore with seeded clinical costing data</p>
         </div>
       </section>
 
@@ -98,8 +107,25 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Demo Quick Links */}
-      <section className="py-16 px-4 bg-gray-50">
+      {/* How to Use CTA */}
+      <section className="py-16 px-4 bg-gradient-to-r from-blue-50 to-emerald-50">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">New to the platform?</h2>
+          <p className="text-gray-600 mb-8 max-w-xl mx-auto">
+            Watch our quick walkthrough to learn how to use the community forum, announcements, polls, and more.
+          </p>
+          <Link
+            href="/how-to-use"
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-semibold transition-colors shadow-md"
+          >
+            <PlayCircle className="w-5 h-5" />
+            Watch the Walkthrough
+          </Link>
+        </div>
+      </section>
+
+      {/* Quick Links */}
+      <section className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-8">Explore the Platform</h2>
           <div className="flex flex-wrap justify-center gap-4">
@@ -117,6 +143,9 @@ export default function LandingPage() {
             </Link>
             <Link href="/profile" className="inline-flex items-center gap-2 bg-white text-gray-700 px-6 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 font-medium transition-colors">
               Profile
+            </Link>
+            <Link href="/admin" className="inline-flex items-center gap-2 bg-white text-gray-700 px-6 py-3 rounded-xl border-2 border-red-200 hover:border-red-300 font-medium transition-colors">
+              Admin
             </Link>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import FirstVisitHelp from "@/components/layout/FirstVisitHelp";
 
 export const metadata: Metadata = {
   title: "HHC Clinical Costing Community",
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="en" dir="ltr">
       <body className="min-h-screen">
         {children}
+        <FirstVisitHelp />
       </body>
     </html>
   );
