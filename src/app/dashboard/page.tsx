@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getCommunityStats, getStoredAnnouncements, getStoredThreads, getStoredPolls, getStoredReplies } from '@/lib/local-data';
+import PollCard from './poll-card';
 import { Bell, MessageSquare, ArrowRight, Users, Vote, TrendingUp, MapPin, Activity, BarChart3 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -147,30 +148,9 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {polls.filter(p => p.is_active).slice(0, 3).map((poll: any) => {
-              const totalVotes = poll.options.reduce((s: number, o: any) => s + o.vote_count, 0);
-              const topOption = [...poll.options].sort((a: any, b: any) => b.vote_count - a.vote_count)[0];
-              return (
-                <div key={poll.id} className="border border-amber-100 rounded-lg p-4 hover:border-amber-200 transition-colors">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">{poll.question}</h3>
-                  <div className="space-y-1 mb-3">
-                    {poll.options.slice(0, 3).map((opt: any) => {
-                      const pct = totalVotes > 0 ? Math.round((opt.vote_count / totalVotes) * 100) : 0;
-                      return (
-                        <div key={opt.id} className="flex items-center gap-2">
-                          <span className="text-xs text-gray-600 truncate flex-1">{opt.text}</span>
-                          <span className="text-xs font-medium text-gray-700">{pct}%</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">{totalVotes} votes</span>
-                    <span className="text-xs text-gray-500">Leading: {topOption?.text}</span>
-                  </div>
-                </div>
-              );
-            })}
+            {polls.filter((p: any) => p.is_active).slice(0, 3).map((poll: any) => (
+              <PollCard key={poll.id} poll={poll} />
+            ))}
           </div>
         </div>
       )}
