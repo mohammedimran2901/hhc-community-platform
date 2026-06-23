@@ -41,8 +41,10 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Public routes
+  // Public routes (accessible without authentication)
   const publicPaths = [
+    '/',
+    '/how-to-use',
     '/auth/login',
     '/auth/register',
     '/auth/verify',

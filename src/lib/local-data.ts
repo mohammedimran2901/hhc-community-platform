@@ -392,7 +392,7 @@ export function getCommunityStats() {
     total_replies: replies.length,
     total_polls: polls.length,
     total_announcements: announcements.length,
-    active_users: 1,
-    clusters_active: 1,
+    active_users: threads.length > 0 ? Math.max(1, new Set([...threads.map(t => t.author)]).size) : 0,
+    clusters_active: threads.some(t => t.clusterName) ? 1 : 0,
   };
 }
