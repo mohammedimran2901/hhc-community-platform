@@ -96,17 +96,13 @@ export default function LoginForm() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
-            Don't have an account?{' '}
-            <Link href="/auth/register" className="text-blue-600 hover:text-blue-700 font-medium">
-              Register here
-            </Link>
-          </div>
-
-          <div className="mt-4 text-center">
+          <div className="mt-6 text-center">
             <Link href="/auth/forgot-password" className="text-sm text-gray-500 hover:text-gray-700">
               Forgot password?
             </Link>
+            <p className="mt-4 text-xs text-gray-400">
+              Accounts are created by your platform administrator. Contact them if you need access.
+            </p>
           </div>
         </div>
       </div>
