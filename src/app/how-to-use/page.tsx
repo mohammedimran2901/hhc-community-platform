@@ -17,6 +17,7 @@ import {
 
 interface WalkthroughStep {
   icon: React.ReactNode;
+  videoKey: string;
   titleEn: string;
   titleAr: string;
   descEn: string;
@@ -28,6 +29,7 @@ interface WalkthroughStep {
 const steps: WalkthroughStep[] = [
   {
     icon: <LayoutDashboard className="w-6 h-6" />,
+    videoKey: 'dashboard',
     titleEn: 'Dashboard Overview',
     titleAr: 'نظرة عامة على لوحة التحكم',
     descEn: 'When you first enter the platform, you\'ll see the dashboard with key metrics, recent announcements, discussions, and community polls.',
@@ -49,6 +51,7 @@ const steps: WalkthroughStep[] = [
   },
   {
     icon: <Bell className="w-6 h-6" />,
+    videoKey: 'announcements',
     titleEn: 'Announcements & Guidance',
     titleAr: 'الإعلانات والتوجيهات',
     descEn: 'HHC publishes official announcements, policy updates, and training opportunities here. Pinned items are always shown first.',
@@ -70,6 +73,7 @@ const steps: WalkthroughStep[] = [
   },
   {
     icon: <MessageSquare className="w-6 h-6" />,
+    videoKey: 'forum',
     titleEn: 'Community Forum',
     titleAr: 'منتدى المجتمع',
     descEn: 'The forum is where you can ask questions, share knowledge, and collaborate with colleagues across all 20 health clusters.',
@@ -91,6 +95,7 @@ const steps: WalkthroughStep[] = [
   },
   {
     icon: <Vote className="w-6 h-6" />,
+    videoKey: 'polls',
     titleEn: 'Community Polls',
     titleAr: 'استطلاعات الرأي',
     descEn: 'Participate in community polls to share your insights on costing methodologies, challenges, and best practices.',
@@ -112,6 +117,7 @@ const steps: WalkthroughStep[] = [
   },
   {
     icon: <Users className="w-6 h-6" />,
+    videoKey: 'clusters',
     titleEn: 'Clusters Directory',
     titleAr: 'دليل التجمعات الصحية',
     descEn: 'Browse the directory of all 20 health clusters in Saudi Arabia. Each cluster has its own profile with key contacts.',
@@ -133,6 +139,7 @@ const steps: WalkthroughStep[] = [
   },
   {
     icon: <ShieldCheck className="w-6 h-6" />,
+    videoKey: 'admin',
     titleEn: 'Admin Panel',
     titleAr: 'لوحة الإدارة',
     descEn: 'Platform administrators can manage users, create announcements, manage polls, and oversee the community.',
@@ -160,6 +167,7 @@ export default function HowToUsePage() {
 
   const step = steps[currentStep];
   const isEn = lang === 'en';
+  const videoSrc = `/videos/${step.videoKey}-${lang}.mp4`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50" dir={isEn ? 'ltr' : 'rtl'}>
@@ -198,15 +206,15 @@ export default function HowToUsePage() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium mb-4">
             <PlayCircle className="w-4 h-4" />
-            {isEn ? 'Interactive Guide' : 'دليل تفاعلي'}
+            {isEn ? 'Video Guide' : 'دليل مرئي'}
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
             {isEn ? 'How to use the platform?' : 'كيفية استخدام المنصة؟'}
           </h1>
           <p className="text-gray-500 max-w-2xl mx-auto">
             {isEn
-              ? 'A step-by-step walkthrough of all the key features — click through each section to learn more.'
-              : 'دليل خطوة بخطوة لجميع الميزات الرئيسية - انقر على كل قسم لمعرفة المزيد.'}
+              ? 'Watch narrated walkthrough videos for each section of the platform.'
+              : 'شاهد فيديوهات شرح مسموعة لكل قسم من أقسام المنصة.'}
           </p>
         </div>
 
@@ -254,7 +262,6 @@ export default function HowToUsePage() {
               </div>
             </div>
 
-            {/* Title in active language */}
             <div className="mt-3 flex items-center gap-3">
               <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center text-white">
                 {step.icon}
@@ -267,6 +274,35 @@ export default function HowToUsePage() {
 
           {/* Content */}
           <div className="p-6 sm:p-8">
+            {/* Video Player */}
+            <div className="mb-8 bg-black rounded-xl overflow-hidden shadow-lg">
+              <video
+                key={videoSrc}
+                controls
+                className="w-full aspect-video"
+                poster={`/videos/${step.videoKey}-en.mp4`}
+                preload="metadata"
+              >
+                <source src={videoSrc} type="video/mp4" />
+                {isEn ? (
+                  <track
+                    kind="subtitles"
+                    srcLang="en"
+                    label="English"
+                    default
+                  />
+                ) : (
+                  <track
+                    kind="subtitles"
+                    srcLang="ar"
+                    label="العربية"
+                    default
+                  />
+                )}
+                Your browser does not support the video tag.
+              </video>
+            </div>
+
             <p className="text-gray-600 text-base sm:text-lg leading-relaxed mb-8">
               {isEn ? step.descEn : step.descAr}
             </p>
@@ -327,13 +363,8 @@ export default function HowToUsePage() {
               <LayoutDashboard className="w-4 h-4" />
               {isEn ? 'Dashboard' : 'لوحة التحكم'}
             </Link>
-            <Link href="/announcements" className="inline-flex items-center gap-2 bg-white text-gray-700 px-4 py-2 rounded-xl border border-gray-200 hover:border-gray-300 text-sm font-medium transition-colors">
-              <Bell className="w-4 h-4" />
-              {isEn ? 'Announcements' : 'الإعلانات'}
-            </Link>
-            <Link href="/forum" className="inline-flex items-center gap-2 bg-white text-gray-700 px-4 py-2 rounded-xl border border-gray-200 hover:border-gray-300 text-sm font-medium transition-colors">
-              <MessageSquare className="w-4 h-4" />
-              {isEn ? 'Forum' : 'المنتدى'}
+            <Link href="/auth/login" className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm font-medium transition-colors">
+              {isEn ? 'Sign In' : 'تسجيل الدخول'}
             </Link>
           </div>
         </div>
