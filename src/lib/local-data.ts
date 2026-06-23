@@ -1,7 +1,7 @@
 'use client';
 
 // Local storage utility for demo data (fallback when Supabase is not configured)
-// Stores announcements, threads, replies, and polls in localStorage
+// Each section has exactly 1 demo item tagged with [Demo]
 
 interface StoredAnnouncement {
   id: string;
@@ -73,12 +73,12 @@ function seedData() {
 
   const baseTime = Date.now();
 
-  // 1 announcement
+  // 1 demo announcement
   const announcements: StoredAnnouncement[] = [
     {
       id: 'seed-ann-1',
-      title: 'Welcome to the HHC Clinical Costing Community',
-      content: 'Welcome to the platform! This community brings together clinical costing professionals across all 20 health clusters in Saudi Arabia. Use this space to share knowledge, ask questions, and collaborate on costing methodologies.\n\nKey features:\n- Forum discussions with colleagues across clusters\n- HHC announcements and policy updates\n- Community polls to share your insights\n- Cluster directory to connect with peers\n\nWe look forward to your contributions!',
+      title: '[Demo] Welcome to the HHC Clinical Costing Community',
+      content: 'This is a demo announcement. The platform brings together clinical costing professionals across all 20 health clusters in Saudi Arabia. Use this space to share knowledge, ask questions, and collaborate on costing methodologies.\n\nKey features:\n- Forum discussions with colleagues across clusters\n- HHC announcements and policy updates\n- Community polls to share your insights\n- Cluster directory to connect with peers',
       author: 'HHC Admin',
       category: 'update' as const,
       is_pinned: true,
@@ -86,45 +86,37 @@ function seedData() {
     },
   ];
 
-  // 1 thread
+  // 1 demo thread
   const threads: StoredThread[] = [
     {
       id: 'seed-thread-1',
-      title: 'How are you handling pharmaceutical cost allocation in outpatient clinics?',
-      content: 'I\'d like to start a discussion on how clusters are approaching pharmaceutical cost allocation for outpatient services. What methodologies are you using? Are you allocating at the patient level or using averages?\n\nSpecifically interested in:\n- How do you handle high-cost biologics?\n- What cost drivers do you use for pharmacy overhead?\n- Any lessons learned or best practices to share?',
-      author: 'Dr. Ahmed Al-Saud',
+      title: '[Demo] How are you handling pharmaceutical cost allocation?',
+      content: 'This is a demo thread. I\'d like to start a discussion on how clusters are approaching pharmaceutical cost allocation for outpatient services. What methodologies are you using?\n\nQuestions:\n- How do you handle high-cost biologics?\n- What cost drivers do you use for pharmacy overhead?\n- Any lessons learned or best practices to share?',
+      author: 'Dr. Ahmed Al-Saud (Demo)',
       clusterName: 'Riyadh First',
       is_resolved: false,
       created_at: new Date(baseTime - 86400000 * 3).toISOString(),
     },
   ];
 
-  // 2 replies for the 1 thread
+  // 1 reply on the demo thread
   const replies: StoredReply[] = [
     {
       id: 'seed-reply-1',
       thread_id: 'seed-thread-1',
-      author: 'Fatima Al-Zahrani',
+      author: 'Fatima Al-Zahrani (Demo)',
       content: 'Great topic! At our cluster we moved to patient-level costing for high-cost biologics and it significantly improved accuracy. For pharmacy overhead, we use number of prescriptions weighted by complexity.',
       parent_reply_id: null,
       created_at: new Date(baseTime - 86400000 * 2.5).toISOString(),
     },
-    {
-      id: 'seed-reply-2',
-      thread_id: 'seed-thread-1',
-      author: 'Dr. Ahmed Al-Saud',
-      content: 'Thank you Fatima! Are you tracking administration costs (nursing time, consumables) separately from the drug cost itself?',
-      parent_reply_id: 'seed-reply-1',
-      created_at: new Date(baseTime - 86400000 * 2).toISOString(),
-    },
   ];
 
-  // 1 poll
+  // 1 demo poll
   const polls: StoredPoll[] = [
     {
       id: 'seed-poll-1',
-      question: 'Which costing methodology does your cluster primarily use?',
-      description: 'Help us understand the current state of costing methodology adoption across clusters.',
+      question: '[Demo] Which costing methodology does your cluster primarily use?',
+      description: 'This is a demo poll to show how polling works on the platform.',
       author: 'HHC Admin',
       clusterName: null,
       is_active: true,
