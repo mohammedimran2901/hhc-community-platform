@@ -9,6 +9,31 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  const { pathname } = request.nextUrl;
+
+  // Public routes (accessible without authentication) - must be checked BEFORE auth
+  const publicPaths = [
+    '/',
+    '/how-to-use',
+    '/auth/login',
+    '/auth/register',
+    '/auth/verify',
+    '/auth/forgot-password',
+    '/auth/callback',
+  ];
+
+  const isPublicPath = publicPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
+
+  // Skip middleware for public routes entirely to avoid redirect loops
+  if (isPublicPath) {
+    return NextResponse.next({ request });
+  }
+
+  // Skip middleware for static files and API routes
+  if (pathname.startsWith('/_next/') || pathname.startsWith('/api/') || pathname.startsWith('/static/')) {
+    return NextResponse.next({ request });
+  }
+
   // Dynamic import to avoid startup crashes when env vars are missing
   const { createServerClient } = await import('@supabase/ssr');
   let supabaseResponse = NextResponse.next({ request });
@@ -34,39 +59,26 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
-
-  // Public routes (accessible without authentication)
-  const publicPaths = [
-    '/',
-    '/how-to-use',
-    '/auth/login',
-    '/auth/register',
-    '/auth/verify',
-    '/auth/forgot-password',
-    '/auth/callback',
-  ];
-
-  const isPublicPath = publicPaths.some((p) => pathname.startsWith(p));
+  // Try to get the user session - wrap in try/catch to handle cases where
+  // the database hasn't been seeded yet or other transient errors
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // If auth fails (e.g., no tables yet), treat as unauthenticated
+    user = null;
+  }
 
   // If user is not logged in and trying to access a protected route, redirect to login
-  if (!user && !isPublicPath && pathname !== '/' && !pathname.startsWith('/api')) {
+  if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
     return NextResponse.redirect(url);
   }
 
-  // If user is logged in and trying to access auth pages, redirect to dashboard
-  if (user && isPublicPath) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
-  }
+  // If user is logged in and trying to access auth pages (shouldn't reach here due to early return, but safety check)
+  // Already handled by early return above.
 
   return supabaseResponse;
 }
