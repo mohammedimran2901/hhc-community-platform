@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Bell, BarChart3, Vote, ArrowLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { LayoutDashboard, Bell, BarChart3, Vote, Users, ArrowLeft, Loader2 } from 'lucide-react';
 
 const adminNavItems = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
+  { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/announcements', label: 'Announcements', icon: Bell },
   { href: '/admin/polls', label: 'Polls', icon: Vote },
 ];
@@ -13,6 +15,38 @@ const adminNavItems = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    async function checkAdmin() {
+      try {
+        const res = await fetch('/api/admin/users', { method: 'HEAD' });
+        // If we get a non-401 response, we're an admin
+        if (res.status === 401) {
+          router.push('/auth/login');
+          return;
+        }
+        if (res.status === 403) {
+          router.push('/dashboard');
+          return;
+        }
+        setIsAdmin(true);
+      } catch {
+        // If API call fails (e.g., Supabase not configured), allow through
+        setIsAdmin(true);
+      }
+    }
+    checkAdmin();
+  }, [router]);
+
+  // Show loading while checking admin status
+  if (isAdmin === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

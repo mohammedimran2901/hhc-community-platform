@@ -1,7 +1,11 @@
 -- HHC Clinical Costing Community - Database Schema & Seed Data
 -- Run this in your Supabase SQL Editor to set up the database
 
+-- Run ALL SQL statements below in order. Do not skip any section.
+
+-- ============================================================
 -- 1. Create the clusters table
+-- ============================================================
 CREATE TABLE IF NOT EXISTS clusters (
   id TEXT PRIMARY KEY,
   name_en TEXT NOT NULL,
@@ -41,7 +45,9 @@ INSERT INTO clusters (id, name_en, name_ar, region) VALUES
   ('c20', 'Jazan', 'جازان', 'Jazan')
 ON CONFLICT (id) DO NOTHING;
 
+-- ============================================================
 -- 4. Create the profiles table (extends Supabase auth.users)
+-- ============================================================
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT,
@@ -62,7 +68,15 @@ CREATE POLICY "Profiles are publicly readable"
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE USING (auth.uid() = id);
 
+-- Allow hhc_admin to manage all profiles
+CREATE POLICY "Admins can manage all profiles"
+  ON profiles FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'hhc_admin')
+  );
+
+-- ============================================================
 -- 5. Create function to create profile on user signup
+-- ============================================================
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -85,7 +99,9 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION handle_new_user();
 
+-- ============================================================
 -- 6. Create announcements table
+-- ============================================================
 CREATE TABLE IF NOT EXISTS announcements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
@@ -109,7 +125,9 @@ CREATE POLICY "Only HHC admins can create announcements"
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'hhc_admin')
   );
 
+-- ============================================================
 -- 7. Create forum threads table
+-- ============================================================
 CREATE TABLE IF NOT EXISTS forum_threads (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
@@ -135,7 +153,9 @@ CREATE POLICY "Authenticated users can create threads"
 CREATE POLICY "Authors can update own threads"
   ON forum_threads FOR UPDATE USING (auth.uid() = author_id);
 
+-- ============================================================
 -- 8. Create forum replies table
+-- ============================================================
 CREATE TABLE IF NOT EXISTS forum_replies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   thread_id UUID REFERENCES forum_threads(id) ON DELETE CASCADE NOT NULL,
@@ -155,7 +175,9 @@ CREATE POLICY "Replies are publicly readable"
 CREATE POLICY "Authenticated users can reply"
   ON forum_replies FOR INSERT WITH CHECK (auth.uid() = author_id);
 
+-- ============================================================
 -- 9. Create polls table
+-- ============================================================
 CREATE TABLE IF NOT EXISTS polls (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   question TEXT NOT NULL,
@@ -182,7 +204,9 @@ CREATE POLICY "HHC admins can update polls"
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'hhc_admin')
   );
 
+-- ============================================================
 -- 10. Create poll options table
+-- ============================================================
 CREATE TABLE IF NOT EXISTS poll_options (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   poll_id UUID REFERENCES polls(id) ON DELETE CASCADE NOT NULL,
@@ -200,7 +224,9 @@ CREATE POLICY "HHC admins can manage options"
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'hhc_admin')
   );
 
+-- ============================================================
 -- 11. Create poll votes table
+-- ============================================================
 CREATE TABLE IF NOT EXISTS poll_votes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   poll_id UUID REFERENCES polls(id) ON DELETE CASCADE NOT NULL,
@@ -221,10 +247,35 @@ CREATE POLICY "Authenticated users can vote"
 CREATE POLICY "Users can change own vote"
   ON poll_votes FOR UPDATE USING (auth.uid() = user_id);
 
+-- ============================================================
 -- 12. Enable real-time for all tables
+-- ============================================================
 ALTER PUBLICATION supabase_realtime ADD TABLE forum_threads;
 ALTER PUBLICATION supabase_realtime ADD TABLE forum_replies;
 ALTER PUBLICATION supabase_realtime ADD TABLE announcements;
 ALTER PUBLICATION supabase_realtime ADD TABLE polls;
 ALTER PUBLICATION supabase_realtime ADD TABLE poll_options;
 ALTER PUBLICATION supabase_realtime ADD TABLE poll_votes;
+
+-- ============================================================
+-- AFTER RUNNING THE ABOVE, DO THE FOLLOWING STEPS MANUALLY:
+-- ============================================================
+--
+-- STEP A — Create the admin user in Supabase Auth
+-- Go to: https://supabase.com/dashboard/project/bxmgcazkdzhyvnqsttnp/auth/users
+-- Click "Add User" and create:
+--   Email: mohammed.imran@health.sa
+--   Password: (choose a strong password, share with the admin securely)
+--   Auto Confirm: ✅ (yes)
+--
+-- STEP B — Run this SQL to set the admin's role:
+--
+--   UPDATE profiles
+--   SET role = 'hhc_admin'
+--   WHERE email = 'mohammed.imran@health.sa';
+--
+-- Alternatively, if you already have the user's UUID, run:
+--
+--   UPDATE profiles
+--   SET role = 'hhc_admin'
+--   WHERE id = 'USER_UUID_HERE';

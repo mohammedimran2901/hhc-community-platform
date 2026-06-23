@@ -1,21 +1,22 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-// Middleware disabled for demo/preview mode.
-// The auth guard is bypassed so you can explore the site without Supabase.
-// To enable auth, uncomment the import and use updateSession below.
-
-// import { updateSession } from '@/lib/supabase/middleware';
-
+// Import is dynamic inside the handler to avoid startup crashes when Supabase env vars are missing
 export async function middleware(request: NextRequest) {
-  // Demo mode: allow all requests through without auth
-  return NextResponse.next({ request });
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // To re-enable auth middleware:
-  // return await updateSession(request);
+  // If Supabase is not configured, allow all requests (demo/preview mode)
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return NextResponse.next({ request });
+  }
+
+  const { updateSession } = await import('@/lib/supabase/middleware');
+  return await updateSession(request);
 }
 
 export const config = {
   matcher: [
+    // Match all routes except static files, images, favicon
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
