@@ -6,14 +6,16 @@
  * Usage: node scripts/generate-walkthrough-videos.mjs
  */
 
-import { execSync } from 'child_process';
-import { mkdirSync, writeFileSync, existsSync } from 'fs';
+import { execSync, spawnSync } from 'child_process';
+import { mkdirSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outDir = join(__dirname, '..', 'public', 'videos');
+const tmpDir = join(__dirname, '..', 'public', 'videos', '.tmp');
 mkdirSync(outDir, { recursive: true });
+mkdirSync(tmpDir, { recursive: true });
 
 // ============================================
 // SECTION DEFINITIONS
@@ -28,18 +30,18 @@ const sections = [
     },
     ar: {
       title: 'نظرة عامة على لوحة التحكم',
-      script: `مرحباً بك في مجتمع التسعير السريري التابع لهيئة الصحة. دعني أريك المنصة. عند دخولك للمنصة لأول مرة، ستظهر لك لوحة التحكم. ستجد هنا المؤشرات الرئيسية بنظرة سريعة: إجمالي مواضيع النقاش والردود النشطة واستطلاعات الرأي والإعلانات. لوحة التحكم هي مركزك الرئيسي. يمكنك تصفح أحدث المناقشات والتصويت في استطلاعات الرأي مباشرة من هذه الصفحة.`,
+      script: `مرحباً بك في مجتمع التسعير السريري التابع لصحة القابضة. دعني أريك المنصة. عند دخولك للمنصة لأول مرة، ستظهر لك لوحة التحكم. ستجد هنا المؤشرات الرئيسية بنظرة سريعة: إجمالي مواضيع النقاش والردود النشطة واستطلاعات الرأي والإعلانات. لوحة التحكم هي مركزك الرئيسي. يمكنك تصفح أحدث المناقشات والتصويت في استطلاعات الرأي مباشرة من هذه الصفحة.`,
     },
   },
   {
     id: 'announcements',
     en: {
       title: 'Announcements',
-      script: `The announcements section is where the Health Holding Company publishes official communications. You'll find policy updates, training opportunities, and guidance documents here. Pinned items always appear at the top. Click any announcement to read the full details. Each one shows the category, author, and publication date.`,
+      script: `The announcements section is where Sehha Al-Qabidah publishes official communications. You'll find policy updates, training opportunities, and guidance documents here. Pinned items always appear at the top. Click any announcement to read the full details. Each one shows the category, author, and publication date.`,
     },
     ar: {
       title: 'الإعلانات والتوجيهات',
-      script: `قسم الإعلانات هو المكان الذي تنشر فيه هيئة الصحة الاتصالات الرسمية. ستجد هنا تحديثات السياسات والفرص التدريبية ووثائق التوجيه. تظهر العناصر المثبتة دائماً في الأعلى. انقر على أي إعلان لقراءة التفاصيل الكاملة. كل إعلان يعرض الفئة والمؤلف وتاريخ النشر.`,
+      script: `قسم الإعلانات هو المكان الذي تنشر فيه صحة القابضة الاتصالات الرسمية. ستجد هنا تحديثات السياسات والفرص التدريبية ووثائق التوجيه. تظهر العناصر المثبتة دائماً في الأعلى. انقر على أي إعلان لقراءة التفاصيل الكاملة. كل إعلان يعرض الفئة والمؤلف وتاريخ النشر.`,
     },
   },
   {
@@ -57,11 +59,11 @@ const sections = [
     id: 'polls',
     en: {
       title: 'Community Polls',
-      script: `Community polls let you share your insights and see what others think. You can view active polls on the dashboard. Simply click on an option to cast your vote. You'll see results update in real time with percentage bars. You can change your vote if you change your mind. Polls help HHC understand the needs and preferences of clusters across the Kingdom.`,
+      script: `Community polls let you share your insights and see what others think. You can view active polls on the dashboard. Simply click on an option to cast your vote. You'll see results update in real time with percentage bars. You can change your vote if you change your mind. Polls help the Health Holding Company understand the needs and preferences of clusters across the Kingdom.`,
     },
     ar: {
       title: 'استطلاعات الرأي',
-      script: `تتيح لك استطلاعات الرأي مشاركة رؤاك ومعرفة آراء الآخرين. يمكنك عرض الاستطلاعات النشطة على لوحة التحكم. ما عليك سوى النقر على خيار للإدلاء بصوتك. ستشاهد النتائج تحدث في الوقت الفعلي مع أشرطة النسبة المئوية. يمكنك تغيير صوتك إذا غيرت رأيك. تساعد الاستطلاعات هيئة الصحة في فهم احتياجات وتفضيلات التجمعات في جميع أنحاء المملكة.`,
+      script: `تتيح لك استطلاعات الرأي مشاركة رؤاك ومعرفة آراء الآخرين. يمكنك عرض الاستطلاعات النشطة على لوحة التحكم. ما عليك سوى النقر على خيار للإدلاء بصوتك. ستشاهد النتائج تحدث في الوقت الفعلي مع أشرطة النسبة المئوية. يمكنك تغيير صوتك إذا غيرت رأيك. تساعد الاستطلاعات صحة القابضة في فهم احتياجات وتفضيلات التجمعات في جميع أنحاء المملكة.`,
     },
   },
   {
@@ -93,38 +95,64 @@ const sections = [
 // ============================================
 
 async function generateTTS(text, outputFile, lang = 'en') {
+  // Write text to temp file to avoid shell escaping issues
+  const textFile = join(tmpDir, 'tts-input.txt');
+  writeFileSync(textFile, text, 'utf-8');
+
   const voice = lang === 'ar' ? 'ar-SA-HamedNeural' : 'en-US-JennyNeural';
-  console.log(`  🎤 Generating TTS (${lang})...`);
-  execSync(
-    `edge-tts --voice "${voice}" --text "${text.replace(/"/g, '\\"')}" --write-media "${outputFile}"`,
-    { stdio: 'pipe' }
+  // Use --file to read text from file instead of command line
+  const result = spawnSync(
+    'edge-tts',
+    ['--voice', voice, '--file', textFile, '--write-media', outputFile],
+    { stdio: 'pipe', timeout: 60000 }
   );
+
+  unlinkSync(textFile);
+
+  if (result.error || result.status !== 0) {
+    throw new Error(`TTS failed: ${result.stderr?.toString() || result.error?.message}`);
+  }
 }
 
 // ============================================
-// CREATE SLIDE IMAGE (using ffmpeg drawtext)
+// CREATE SLIDE VIDEO WITH ffmpeg (using textfile for drawtext)
 // ============================================
 
-function createSlideVideo(title, subtitle, duration, outputFile) {
-  // Escape single quotes for ffmpeg
-  const safeTitle = title.replace(/'/g, "'\\\\\\\\\\\\''");
-  const safeSubtitle = subtitle.replace(/'/g, "'\\\\\\\\\\\\''");
+function createSlideVideo(titleEn, titleAr, subtitle, duration, outputFile) {
+  // Write drawtext content to a file to avoid shell escaping issues
+  const drawTextFile = join(tmpDir, 'drawtext.txt');
+  const fullText = `${titleEn}\n${subtitle}`;
+  writeFileSync(drawTextFile, fullText, 'utf-8');
 
-  const cmd = [
-    'ffmpeg', '-y',
+  // Use ffmpeg with drawtext reading from file
+  const args = [
+    '-y',
     '-f', 'lavfi',
     '-i', `color=c=0x1E3A5F:s=1280x720:d=${duration}`,
     '-vf',
-    `drawtext=text='${safeTitle}':fontsize=48:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2-40:fontsize=40,` +
-    `drawtext=text='${safeSubtitle}':fontsize=24:fontcolor=0x94A3B8:x=(w-text_w)/2:y=(h-text_h)/2+30:fontsize=22,` +
-    `drawtext=text='HHC Clinical Costing Community':fontsize=18:fontcolor=0x60A5FA:x=(w-text_w)/2:y=h-60:fontsize=16`,
+    `drawtext=textfile='${drawTextFile}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2-60:line_spacing=10`,
     '-c:v', 'libx264',
     '-preset', 'ultrafast',
     '-pix_fmt', 'yuv420p',
     outputFile,
   ];
 
-  execSync(cmd.join(' '), { stdio: 'pipe' });
+  const result = spawnSync('ffmpeg', args, { stdio: 'pipe', timeout: 30000 });
+  unlinkSync(drawTextFile);
+
+  if (result.error || result.status !== 0) {
+    const err = result.stderr?.toString() || result.error?.message || '';
+    // Fallback: just create blank video
+    if (err.includes('drawtext') || err.includes('fonts')) {
+      console.log(`     (drawtext not supported, using blank background)`);
+      execSync(
+        `ffmpeg -y -f lavfi -i "color=c=0x1E3A5F:s=1280x720:d=${duration}" -c:v libx264 -preset ultrafast -pix_fmt yuv420p "${outputFile}"`,
+        { stdio: 'pipe' }
+      );
+      return;
+    }
+    throw new Error(err.slice(0, 200));
+  }
 }
 
 // ============================================
@@ -137,42 +165,52 @@ async function main() {
   for (const section of sections) {
     for (const lang of ['en', 'ar']) {
       const data = section[lang];
+      const otherData = section[lang === 'en' ? 'ar' : 'en'];
       const langLabel = lang === 'en' ? 'English' : 'Arabic';
-      const voiceLang = lang === 'en' ? 'en' : 'ar';
-      const voiceLabel = lang === 'en' ? 'JennyNeural' : 'HamedNeural';
 
       console.log(`📹 Section: ${section.id} — ${langLabel}`);
 
-      const audioFile = join(outDir, `${section.id}-${lang}.mp3`);
-      const slideFile = join(outDir, `${section.id}-${lang}-slide.mp4`);
+      const audioFile = join(tmpDir, `${section.id}-${lang}.mp3`);
+      const slideFile = join(tmpDir, `${section.id}-${lang}-slide.mp4`);
       const outputFile = join(outDir, `${section.id}-${lang}.mp4`);
 
       // Step 1: Generate TTS
       try {
-        await generateTTS(data.script, audioFile, voiceLang);
+        await generateTTS(data.script, audioFile, lang === 'ar' ? 'ar' : 'en');
         console.log(`  ✅ Audio generated`);
       } catch (err) {
-        console.log(`  ⚠️  TTS failed: ${err.message}. Skipping.`);
+        console.log(`  ❌ TTS failed: ${err.message}`);
         continue;
       }
 
       // Step 2: Get audio duration
-      let duration = 30; // fallback
+      let duration = 30;
       try {
         const probe = execSync(
           `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioFile}"`,
           { encoding: 'utf-8' }
         );
-        duration = Math.ceil(parseFloat(probe.trim())) + 2; // add 2 sec padding
-      } catch {}
+        duration = Math.ceil(parseFloat(probe.trim())) + 2;
+      } catch {
+        console.log(`  ⚠️  Could not probe duration, using 30s`);
+      }
 
-      // Step 3: Create slide background
+      // Step 3: Create slide video with text overlay
       try {
-        createSlideVideo(data.title, `HHC Clinical Costing Community`, duration, slideFile);
+        createSlideVideo(
+          data.title,
+          otherData.title,
+          lang === 'en' ? 'Health Holding Company | صحة القابضة' : 'صحة القابضة | Health Holding Company',
+          duration,
+          slideFile
+        );
         console.log(`  ✅ Slide video created (${duration}s)`);
       } catch (err) {
-        console.log(`  ⚠️  Slide creation failed: ${err.message}. Using blank.`);
-        execSync(`ffmpeg -y -f lavfi -i "color=c=0x1E3A5F:s=1280x720:d=${duration}" -c:v libx264 -preset ultrafast -pix_fmt yuv420p "${slideFile}"`, { stdio: 'pipe' });
+        console.log(`  ⚠️  Slide failed: ${err.message?.slice(0, 80)}`);
+        execSync(
+          `ffmpeg -y -f lavfi -i "color=c=0x1E3A5F:s=1280x720:d=${duration}" -c:v libx264 -preset ultrafast -pix_fmt yuv420p "${slideFile}"`,
+          { stdio: 'pipe' }
+        );
       }
 
       // Step 4: Combine video + audio
@@ -183,25 +221,20 @@ async function main() {
         );
         console.log(`  ✅ Final video: ${outputFile}`);
       } catch (err) {
-        console.log(`  ⚠️  Video combine failed: ${err.message}`);
+        console.log(`  ❌ Combine failed: ${err.message?.slice(0, 100)}`);
       }
 
       // Cleanup temp files
-      try { execSync(`rm "${audioFile}" "${slideFile}"`, { stdio: 'pipe' }); } catch {}
+      try { unlinkSync(audioFile); } catch {}
+      try { unlinkSync(slideFile); } catch {}
     }
   }
 
   console.log('\n✅ All videos generated!');
-  console.log(`Output directory: ${outDir}`);
-  console.log('\nFiles:');
-  for (const section of sections) {
-    for (const lang of ['en', 'ar']) {
-      const file = join(outDir, `${section.id}-${lang}.mp4`);
-      if (existsSync(file)) {
-        console.log(`  ✅ ${section.id}-${lang}.mp4`);
-      }
-    }
-  }
+  console.log(`Output directory: ${outDir}\n`);
 }
 
-main().catch(console.error);
+main().catch(err => {
+  console.error('Fatal error:', err.message);
+  process.exit(1);
+});
