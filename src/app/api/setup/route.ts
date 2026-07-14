@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 
 const SETUP_SECRET = 'hhc-setup-2026-secret-key';
 
+const SUPABASE_URL = 'https://bxmgcazkdzhyvnqsttnp.supabase.co';
+
+function getServiceKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+}
+
 /**
  * POST /api/setup
- * One-time setup endpoint to create initial admin users.
- * Protected by a shared secret (not meant to be left in production permanently).
- *
- * Body: { secret: string, users: Array<{ email, password, full_name, role }> }
+ * Creates initial admin users via Supabase Management REST API (no Supabase client).
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { secret, users } = body;
 
-    // Validate secret
     if (secret !== SETUP_SECRET) {
       return NextResponse.json({ error: 'Invalid setup secret' }, { status: 403 });
     }
@@ -24,7 +25,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Users array is required' }, { status: 400 });
     }
 
-    const adminClient = createAdminClient();
+    const serviceKey = getServiceKey();
+    if (!serviceKey) {
+      return NextResponse.json({ error: 'Service key not configured' }, { status: 500 });
+    }
+
     const results: Array<{ email: string; status: string; id?: string; error?: string }> = [];
 
     for (const user of users) {
@@ -36,46 +41,113 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // Create auth user
-        const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: { full_name: full_name || '' },
+        // Step 1: Create auth user via Supabase Admin API (raw fetch)
+        const createRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${serviceKey}`,
+            'apikey': serviceKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { full_name: full_name || '' },
+          }),
         });
 
-        if (createError) {
-          // Check if user already exists
-          if (createError.message.includes('already') || createError.message.includes('been registered')) {
-            // Look up existing user to update role
-            const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-            const existing = existingUsers?.users?.find(u => u.email === email);
+        const createData = await createRes.json();
+
+        if (createRes.status === 201 || createRes.status === 200) {
+          const userId = createData.id;
+          results.push({ email, status: 'created', id: userId });
+
+          // Step 2: Update profile role to hhc_admin
+          if (role && role !== 'member') {
+            // Check if profile exists
+            const profileCheck = await fetch(
+              `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=id`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${serviceKey}`,
+                  'apikey': serviceKey,
+                },
+              }
+            );
+            const profileData = await profileCheck.json();
+
+            if (profileData && profileData.length > 0) {
+              // Update existing profile
+              await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${serviceKey}`,
+                  'apikey': serviceKey,
+                  'Content-Type': 'application/json',
+                  'Prefer': 'return=minimal',
+                },
+                body: JSON.stringify({ role }),
+              });
+            } else {
+              // Insert new profile
+              await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${serviceKey}`,
+                  'apikey': serviceKey,
+                  'Content-Type': 'application/json',
+                  'Prefer': 'return=minimal',
+                },
+                body: JSON.stringify({
+                  id: userId,
+                  email,
+                  full_name: full_name || '',
+                  role,
+                }),
+              });
+            }
+          }
+        } else if (
+          createData.error_code === 'user_already_exists' ||
+          (createData.message && createData.message.includes('already'))
+        ) {
+          // User exists — update their role
+          const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+            headers: {
+              'Authorization': `Bearer ${serviceKey}`,
+              'apikey': serviceKey,
+            },
+          });
+          const listData = await listRes.json();
+
+          if (listData.users) {
+            const existing = listData.users.find((u: any) => u.email === email);
             if (existing) {
-              await adminClient
-                .from('profiles')
-                .upsert(
-                  { id: existing.id, email, full_name: full_name || '', role: role || 'member' },
-                  { onConflict: 'id' }
-                );
+              await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${serviceKey}`,
+                  'apikey': serviceKey,
+                  'Content-Type': 'application/json',
+                  'Prefer': 'resolution=merge-duplicates',
+                },
+                body: JSON.stringify({
+                  id: existing.id,
+                  email,
+                  full_name: full_name || '',
+                  role: role || 'member',
+                }),
+              });
               results.push({ email, status: 'updated_existing', id: existing.id });
             } else {
-              results.push({ email, status: 'error', error: createError.message });
+              results.push({ email, status: 'error', error: 'User exists but not found in listing' });
             }
           } else {
-            results.push({ email, status: 'error', error: createError.message });
+            results.push({ email, status: 'error', error: createData.message || 'User already exists' });
           }
-          continue;
-        }
-
-        const userId = newUser.user.id;
-        results.push({ email, status: 'created', id: userId });
-
-        // Set role if not member
-        if (role && role !== 'member') {
-          await adminClient
-            .from('profiles')
-            .update({ role })
-            .eq('id', userId);
+        } else {
+          results.push({ email, status: 'error', error: createData.message || `Status ${createRes.status}` });
         }
       } catch (err: any) {
         results.push({ email, status: 'error', error: err?.message || 'Unknown error' });
