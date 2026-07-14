@@ -17,15 +17,19 @@ export function Navbar() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [username, setUsername] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     setUsername('Demo User');
     getClient().then((supabase) => {
       supabase.auth.getUser().then(({ data }) => {
-        if (data.user?.user_metadata?.full_name) {
-          setUsername(data.user.user_metadata.full_name as string);
-        } else if (data.user?.email) {
-          setUsername(data.user.email);
+        if (data.user) {
+          setIsLoggedIn(true);
+          if (data.user.user_metadata?.full_name) {
+            setUsername(data.user.user_metadata.full_name as string);
+          } else if (data.user.email) {
+            setUsername(data.user.email);
+          }
         }
       }).catch(() => {});
     }).catch(() => {});
@@ -56,7 +60,7 @@ export function Navbar() {
               <span className="text-xs font-medium hidden sm:inline">Back</span>
             </button>
             <div className="w-px h-6 bg-gray-200" />
-            <Link href="/" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors" title="Home">
+            <Link href={isLoggedIn ? "/dashboard" : "/"} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors" title="Home">
               <Home className="w-4 h-4" />
               <span className="text-xs font-medium hidden sm:inline">Home</span>
             </Link>
