@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import FirstVisitHelp from "@/components/layout/FirstVisitHelp";
+import { FeedbackButton } from "@/components/FeedbackButton";
 
 export const metadata: Metadata = {
   title: "HHC Clinical Costing Community",
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body className="min-h-screen">
         {children}
         <FirstVisitHelp />
+        <FeedbackButton />
       </body>
     </html>
   );
