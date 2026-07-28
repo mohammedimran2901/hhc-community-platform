@@ -4,7 +4,16 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getCommunityStats, getStoredAnnouncements, getStoredThreads, getStoredPolls, getStoredReplies } from '@/lib/local-data';
 import PollCard from './poll-card';
-import { Bell, MessageSquare, ArrowRight, Users, Vote, TrendingUp, MapPin, Activity, BarChart3 } from 'lucide-react';
+import { Bell, MessageSquare, ArrowRight, Users, Vote, MapPin, Activity, Sparkles } from 'lucide-react';
+
+const statCards = [
+  { key: 'threads', label: 'Threads', icon: MessageSquare, chip: 'bg-emerald-500/10 text-emerald-600' },
+  { key: 'replies', label: 'Replies', icon: MessageSquare, chip: 'bg-purple-500/10 text-purple-600' },
+  { key: 'polls', label: 'Active Polls', icon: Vote, chip: 'bg-amber-500/10 text-amber-600' },
+  { key: 'announcements', label: 'Announcements', icon: Bell, chip: 'bg-blue-500/10 text-blue-600' },
+  { key: 'members', label: 'Members', icon: Users, chip: 'bg-teal-500/10 text-teal-600' },
+  { key: 'clusters', label: 'Active Clusters', icon: MapPin, chip: 'bg-indigo-500/10 text-indigo-600' },
+];
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({ total_threads: 0, total_replies: 0, total_polls: 0, total_announcements: 0, active_users: 0, clusters_active: 0 });
@@ -19,48 +28,60 @@ export default function DashboardPage() {
     setPolls(getStoredPolls());
   }, []);
 
+  const statValues: Record<string, string | number> = {
+    threads: stats.total_threads,
+    replies: stats.total_replies,
+    polls: polls.filter(p => p.is_active).length,
+    announcements: stats.total_announcements,
+    members: stats.active_users,
+    clusters: `${stats.clusters_active}/20`,
+  };
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Welcome to HHC Clinical Costing Community</h1>
-        <p className="text-gray-500 mt-1">Your central hub for clinical costing collaboration across 20 health clusters</p>
+      {/* Premium Welcome Banner */}
+      <div className="relative overflow-hidden rounded-3xl bg-slate-950 px-8 py-10 sm:px-12">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="relative">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur text-emerald-300 px-3 py-1 rounded-full text-xs font-medium mb-4 border border-white/10">
+            <Sparkles className="w-3.5 h-3.5" />
+            HHC Clinical Costing Community
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Welcome back
+          </h1>
+          <p className="text-slate-400 mt-2 max-w-xl">
+            Your central hub for clinical costing collaboration across Saudi Arabia's 20 health clusters.
+          </p>
+        </div>
       </div>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-emerald-600 mb-1"><MessageSquare className="w-4 h-4" /><span className="text-xs font-medium">Threads</span></div>
-          <p className="text-2xl font-bold text-gray-900">{stats.total_threads}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-purple-600 mb-1"><MessageSquare className="w-4 h-4" /><span className="text-xs font-medium">Replies</span></div>
-          <p className="text-2xl font-bold text-gray-900">{stats.total_replies}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-amber-600 mb-1"><Vote className="w-4 h-4" /><span className="text-xs font-medium">Active Polls</span></div>
-          <p className="text-2xl font-bold text-gray-900">{polls.filter(p => p.is_active).length}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-blue-600 mb-1"><Bell className="w-4 h-4" /><span className="text-xs font-medium">Announcements</span></div>
-          <p className="text-2xl font-bold text-gray-900">{stats.total_announcements}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-green-600 mb-1"><Users className="w-4 h-4" /><span className="text-xs font-medium">Members</span></div>
-          <p className="text-2xl font-bold text-gray-900">{stats.active_users}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-indigo-600 mb-1"><MapPin className="w-4 h-4" /><span className="text-xs font-medium">Active Clusters</span></div>
-          <p className="text-2xl font-bold text-gray-900">{stats.clusters_active}/20</p>
-        </div>
+        {statCards.map((card) => (
+          <div
+            key={card.key}
+            className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+          >
+            <div className={`w-9 h-9 ${card.chip} rounded-xl flex items-center justify-center mb-3`}>
+              <card.icon className="w-4 h-4" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 tracking-tight">{statValues[card.key]}</p>
+            <p className="text-xs text-gray-500 mt-0.5 font-medium">{card.label}</p>
+          </div>
+        ))}
       </div>
 
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Announcements */}
-        <div className="lg:col-span-1 bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-blue-600" />
+        <div className="lg:col-span-1 bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                <Bell className="w-4 h-4 text-blue-600" />
+              </div>
               <h2 className="font-semibold text-gray-900">Announcements</h2>
             </div>
             <Link href="/announcements" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
@@ -68,10 +89,10 @@ export default function DashboardPage() {
             </Link>
           </div>
           {announcements.length > 0 ? (
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {announcements.slice(0, 4).map((a: any) => (
                 <li key={a.id}>
-                  <Link href={`/announcements/${a.id}`} className="block p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link href={`/announcements/${a.id}`} className="block p-3 rounded-xl hover:bg-slate-50 transition-colors">
                     <div className="flex items-center gap-2 mb-0.5">
                       {a.is_pinned && <span className="text-amber-500 text-xs">📌</span>}
                       <p className="text-sm font-medium text-gray-900 line-clamp-2">{a.title}</p>
@@ -89,10 +110,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Discussions */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-emerald-600" />
+        <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-emerald-600" />
+              </div>
               <h2 className="font-semibold text-gray-900">Recent Discussions</h2>
             </div>
             <Link href="/forum" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
@@ -100,14 +123,14 @@ export default function DashboardPage() {
             </Link>
           </div>
           {threads.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {threads.slice(0, 5).map((t: any) => {
                 const replyCount = getStoredReplies(t.id).length;
                 return (
                   <Link
                     key={t.id}
                     href={`/forum/${t.id}`}
-                    className="block p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="block p-3 rounded-xl hover:bg-slate-50 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -132,7 +155,7 @@ export default function DashboardPage() {
           ) : (
             <p className="text-sm text-gray-500">No discussions yet</p>
           )}
-          <Link href="/forum/new" className="mt-4 inline-flex items-center gap-2 text-sm bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 font-medium transition-colors">
+          <Link href="/forum/new" className="mt-5 inline-flex items-center gap-2 text-sm bg-slate-900 text-white px-5 py-2.5 rounded-xl hover:bg-slate-800 font-medium transition-all shadow-sm hover:shadow-md">
             Start a Discussion
           </Link>
         </div>
@@ -140,10 +163,12 @@ export default function DashboardPage() {
 
       {/* Community Polls */}
       {polls.filter(p => p.is_active).length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Vote className="w-5 h-5 text-amber-600" />
+        <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center">
+                <Vote className="w-4 h-4 text-amber-600" />
+              </div>
               <h2 className="font-semibold text-gray-900">Community Polls</h2>
             </div>
           </div>
@@ -157,29 +182,41 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-4 gap-4">
-        <Link href="/announcements" className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-200 hover:shadow-sm transition-all">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+        <Link href="/announcements" className="group flex items-center gap-4 p-5 bg-white rounded-2xl border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+          <div className="w-11 h-11 bg-blue-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
             <Bell className="w-5 h-5 text-blue-600" />
           </div>
-          <div><p className="font-medium text-gray-900">Announcements</p><p className="text-sm text-gray-500">Latest from HHC</p></div>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">Announcements</p>
+            <p className="text-xs text-gray-500 mt-0.5">Latest from HHC</p>
+          </div>
         </Link>
-        <Link href="/forum" className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-emerald-200 hover:shadow-sm transition-all">
-          <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+        <Link href="/forum" className="group flex items-center gap-4 p-5 bg-white rounded-2xl border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+          <div className="w-11 h-11 bg-emerald-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
             <MessageSquare className="w-5 h-5 text-emerald-600" />
           </div>
-          <div><p className="font-medium text-gray-900">Forum</p><p className="text-sm text-gray-500">Discuss & collaborate</p></div>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">Forum</p>
+            <p className="text-xs text-gray-500 mt-0.5">Discuss & collaborate</p>
+          </div>
         </Link>
-        <Link href="/clusters" className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-purple-200 hover:shadow-sm transition-all">
-          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+        <Link href="/clusters" className="group flex items-center gap-4 p-5 bg-white rounded-2xl border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+          <div className="w-11 h-11 bg-purple-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
             <Users className="w-5 h-5 text-purple-600" />
           </div>
-          <div><p className="font-medium text-gray-900">Clusters</p><p className="text-sm text-gray-500">20 clusters network</p></div>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">Clusters</p>
+            <p className="text-xs text-gray-500 mt-0.5">20 clusters network</p>
+          </div>
         </Link>
-        <Link href="/profile" className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-indigo-200 hover:shadow-sm transition-all">
-          <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+        <Link href="/profile" className="group flex items-center gap-4 p-5 bg-white rounded-2xl border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+          <div className="w-11 h-11 bg-indigo-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
             <Activity className="w-5 h-5 text-indigo-600" />
           </div>
-          <div><p className="font-medium text-gray-900">My Profile</p><p className="text-sm text-gray-500">Your activity</p></div>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">My Profile</p>
+            <p className="text-xs text-gray-500 mt-0.5">Your activity</p>
+          </div>
         </Link>
       </div>
     </div>

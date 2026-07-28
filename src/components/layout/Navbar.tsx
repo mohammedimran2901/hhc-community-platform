@@ -45,7 +45,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <nav className="bg-white/80 backdrop-blur-xl border-b border-gray-900/5 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo & Navigation */}
@@ -70,11 +70,14 @@ export function Navbar() {
               <span className="text-xs font-medium hidden sm:inline">Dashboard</span>
             </Link>
             <div className="w-px h-6 bg-gray-200" />
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">HHC</span>
+            <Link href="/dashboard" className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-gradient-to-br from-slate-800 to-slate-950 rounded-xl flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-sm tracking-tight">HHC</span>
               </div>
-              <span className="font-semibold text-gray-900 hidden sm:block">Costing Community</span>
+              <div className="leading-tight hidden sm:block">
+                <span className="font-semibold text-gray-900 block text-sm">Clinical Costing</span>
+                <span className="text-xs text-gray-500">Community Platform</span>
+              </div>
             </Link>
           </div>
 

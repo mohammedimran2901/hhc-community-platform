@@ -35,15 +35,18 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-emerald-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 via-white to-white px-4 relative overflow-hidden">
+      {/* Premium background accents */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-gradient-to-br from-blue-100/50 via-emerald-50/30 to-transparent rounded-full blur-3xl" />
+
+      <div className="w-full max-w-md relative">
+        <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 sm:p-10">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-slate-800 to-slate-950 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg">
               <LogIn className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-            <p className="text-gray-500 mt-2">Sign in to your account</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome back</h1>
+            <p className="text-gray-500 mt-2">Sign in to the HHC Costing Community</p>
           </div>
 
           {error && (
@@ -86,7 +89,7 @@ export default function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-slate-900 text-white py-3 rounded-xl hover:bg-slate-800 font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
