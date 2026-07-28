@@ -40,10 +40,19 @@ export default async function ClustersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Health Clusters Directory</h1>
-        <p className="text-gray-500 mt-1">All 20 health clusters in Saudi Arabia</p>
+    <div className="space-y-8">
+      {/* Premium Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-slate-950 px-8 py-10 sm:px-12">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl" />
+        <div className="relative">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Health Clusters Directory
+          </h1>
+          <p className="text-slate-400 mt-2 max-w-xl">
+            Connect with costing leads and teams across all 20 health clusters in Saudi Arabia.
+          </p>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -51,11 +60,11 @@ export default async function ClustersPage() {
           <Link
             key={c.id}
             href={`/clusters/${c.id}`}
-            className="bg-white rounded-xl border border-gray-200 p-5 hover:border-blue-200 hover:shadow-sm transition-all"
+            className="group bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
           >
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="w-11 h-11 bg-purple-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-purple-600" />
               </div>
               <div className="min-w-0">
                 <h3 className="font-semibold text-gray-900 truncate">{c.name_en}</h3>
