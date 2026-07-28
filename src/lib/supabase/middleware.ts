@@ -19,6 +19,7 @@ export async function updateSession(request: NextRequest) {
     '/auth/register',
     '/auth/verify',
     '/auth/forgot-password',
+    '/auth/reset-password',
     '/auth/callback',
   ];
 

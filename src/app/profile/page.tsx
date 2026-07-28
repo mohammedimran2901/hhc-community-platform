@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getClient } from '@/lib/supabase/client-lazy';
-import { User, Loader2, MessageSquare, Bell, Vote, Activity, MapPin } from 'lucide-react';
+import { User, Loader2, MessageSquare, Bell, Vote, Activity, MapPin, Lock, CheckCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getStoredThreads, getStoredReplies, getStoredPolls, getUserVoteOptionId } from '@/lib/local-data';
 
@@ -13,6 +13,45 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [myThreads, setMyThreads] = useState<any[]>([]);
   const [myReplies, setMyReplies] = useState<any[]>([]);
+
+  // Change password state
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const supabase = await getClient();
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        setPasswordError(error.message);
+      } else {
+        setPasswordSuccess(true);
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (err: any) {
+      setPasswordError(err.message || 'Failed to update password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   useEffect(() => {
     async function loadProfile() {
@@ -113,6 +152,73 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Change Password Card - only for logged-in users */}
+      {!isDemo && (
+        <div className="bg-white rounded-xl border border-gray-200 p-8">
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Lock className="w-4 h-4 text-blue-600" />
+            Change Password
+          </h3>
+
+          {passwordSuccess && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />
+              Password updated successfully!
+            </div>
+          )}
+
+          {passwordError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+              {passwordError}
+            </div>
+          )}
+
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                New Password
+              </label>
+              <input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                placeholder="Min. 6 characters"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm New Password
+              </label>
+              <input
+                id="confirmNewPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                placeholder="Re-enter your new password"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={changingPassword}
+              className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {changingPassword ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                'Update Password'
+              )}
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Activity Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
