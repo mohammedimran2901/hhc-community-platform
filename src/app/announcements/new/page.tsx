@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { saveAnnouncement } from '@/lib/local-data';
+import { AttachmentPicker } from '@/components/AttachmentPicker';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 const categories = [
@@ -19,8 +20,11 @@ export default function NewAnnouncementPage() {
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<'guidance' | 'update' | 'training' | 'policy'>('guidance');
   const [author, setAuthor] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachmentWarnings, setAttachmentWarnings] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState('');
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,6 +37,7 @@ export default function NewAnnouncementPage() {
     }
 
     setLoading(true);
+    const warnings: string[] = [];
 
     // Save to localStorage for demo mode
     saveAnnouncement({ title: title.trim(), content: content.trim(), category, author: author.trim() });
@@ -43,17 +48,47 @@ export default function NewAnnouncementPage() {
       const supabase = await getClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('announcements').insert({
-          title: title.trim(),
-          content: content.trim(),
-          category,
-          author_id: user.id,
-        });
+        const { data: created, error: insertError } = await supabase
+          .from('announcements')
+          .insert({
+            title: title.trim(),
+            content: content.trim(),
+            category,
+            author_id: user.id,
+          })
+          .select('id')
+          .single();
+
+        // Upload attachments (admin only — enforced by /api/admin/files)
+        if (!insertError && created && attachments.length > 0) {
+          for (let i = 0; i < attachments.length; i++) {
+            setProgress(`Uploading attachment ${i + 1} of ${attachments.length}...`);
+            try {
+              const form = new FormData();
+              form.append('file', attachments[i]);
+              form.append('announcement_id', created.id);
+              const res = await fetch('/api/admin/files', { method: 'POST', body: form });
+              if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                warnings.push(`${attachments[i].name}: ${data.error || 'upload failed'}`);
+              }
+            } catch {
+              warnings.push(`${attachments[i].name}: upload failed`);
+            }
+          }
+        }
+      } else if (attachments.length > 0) {
+        warnings.push('Attachments require an admin sign-in and were skipped.');
       }
     } catch {
       // Supabase not available - demo mode
+      if (attachments.length > 0) {
+        warnings.push('Attachments are only available when connected to Supabase.');
+      }
     }
 
+    setAttachmentWarnings(warnings);
+    setProgress('');
     setSuccess(true);
     setLoading(false);
   };
@@ -68,6 +103,16 @@ export default function NewAnnouncementPage() {
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Announcement Created!</h1>
         <p className="text-gray-600 mb-6">Your announcement has been published.</p>
+        {attachmentWarnings.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-6 text-sm text-left">
+            <p className="font-medium mb-1">Some attachments could not be uploaded:</p>
+            <ul className="list-disc list-inside space-y-0.5">
+              {attachmentWarnings.map((w, i) => (
+                <li key={i}>{w}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <Link href="/announcements" className="text-blue-600 hover:text-blue-700 font-medium">
           Back to announcements
         </Link>
@@ -130,11 +175,19 @@ export default function NewAnnouncementPage() {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Attachments <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <AttachmentPicker files={attachments} onChange={setAttachments} maxFiles={5} disabled={loading} />
+            <p className="text-xs text-gray-400 mt-1.5">Members will be able to download these files from the announcement.</p>
+          </div>
+
           <button
             type="submit" disabled={loading}
             className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publish Announcement'}
+            {loading ? (<><Loader2 className="w-5 h-5 animate-spin" /> {progress || 'Publishing...'}</>) : 'Publish Announcement'}
           </button>
         </form>
       </div>

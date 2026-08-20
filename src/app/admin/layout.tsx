@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Bell, BarChart3, Vote, Users, ArrowLeft, Loader2, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Bell, BarChart3, Vote, Users, ArrowLeft, Loader2, MessageSquare, FolderOpen } from 'lucide-react';
 
 const adminNavItems = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/announcements', label: 'Announcements', icon: Bell },
+  { href: '/admin/resources', label: 'Resources', icon: FolderOpen },
   { href: '/admin/polls', label: 'Polls', icon: Vote },
   { href: '/admin/feedback', label: 'Feedback', icon: MessageSquare },
 ];

@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { getClient } from '@/lib/supabase/client-lazy';
-import { LayoutDashboard, Bell, MessageSquare, Users, User, LogOut, Menu, X, Shield, Home, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, Bell, MessageSquare, Users, User, LogOut, Menu, X, Shield, Home, ArrowLeft, FolderOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const navItems = [
   { href: '/announcements', label: 'Announcements', icon: Bell },
   { href: '/forum', label: 'Forum', icon: MessageSquare },
+  { href: '/resources', label: 'Resources', icon: FolderOpen },
   { href: '/clusters', label: 'Clusters', icon: Users },
 ];
 

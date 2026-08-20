@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Download, Paperclip } from 'lucide-react';
+import { fileDownloadUrl, formatFileSize } from '@/lib/files';
 
 export default async function AnnouncementDetailPage({
   params,
@@ -9,6 +10,7 @@ export default async function AnnouncementDetailPage({
 }) {
   const { id } = await params;
   let announcement: any = null;
+  let attachments: any[] = [];
 
   // Try Supabase first
   try {
@@ -16,7 +18,7 @@ export default async function AnnouncementDetailPage({
     const supabase = await createClient();
     const { data } = await supabase
       .from('announcements')
-      .select('*, author:author_id(full_name)')
+      .select('*')
       .eq('id', id)
       .single();
     announcement = data
@@ -25,6 +27,16 @@ export default async function AnnouncementDetailPage({
           author_name: data.author?.full_name || 'Unknown',
         }
       : null;
+
+    // Fetch attachments for this announcement (may be empty / table missing)
+    if (announcement) {
+      const { data: attachmentData } = await supabase
+        .from('announcement_attachments')
+        .select('*')
+        .eq('announcement_id', id)
+        .order('created_at', { ascending: true });
+      if (attachmentData) attachments = attachmentData;
+    }
   } catch {
     announcement = null;
   }
@@ -91,6 +103,31 @@ export default async function AnnouncementDetailPage({
         <div className="prose prose-gray max-w-none">
           <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{announcement.content}</p>
         </div>
+
+        {attachments.length > 0 && (
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
+              <Paperclip className="w-4 h-4 text-gray-500" />
+              Attachments ({attachments.length})
+            </h2>
+            <ul className="space-y-2">
+              {attachments.map((attachment: any) => (
+                <li key={attachment.id}>
+                  <a
+                    href={fileDownloadUrl(attachment.file_path)}
+                    className="flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50/50 transition-colors group"
+                  >
+                    <span className="text-sm text-gray-700 truncate">{attachment.file_name}</span>
+                    <span className="flex items-center gap-2 text-xs text-gray-400 flex-shrink-0">
+                      {formatFileSize(attachment.file_size)}
+                      <Download className="w-4 h-4 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </article>
     </div>
   );

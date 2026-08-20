@@ -15,6 +15,13 @@
 3. Copy the entire contents and paste into the SQL Editor
 4. Click **Run** — this creates all tables, RLS policies, triggers, and seed data
 
+## Step 1b: Run the Resources & Attachments Migration
+
+1. In **SQL Editor**, open the file `supabase/migrations/002_resources_and_attachments.sql`
+2. Copy the entire contents, paste into the SQL Editor, and click **Run**
+3. This creates the private `resources` storage bucket, the `resources` table
+   (shared document library), and the `announcement_attachments` table with RLS policies
+
 ## Step 2: Create the Admin User
 
 1. In **Supabase Dashboard** → **Authentication** → **Users**
@@ -106,6 +113,9 @@ vercel --prod
 - [ ] Can **edit role** inline from the table
 - [ ] Can **delete user** with confirmation
 - [ ] Forum, announcements, polls, clusters pages all load
+- [ ] **Admin → Resources** — can upload a file and it appears in the library
+- [ ] `/resources` — members can see and download uploaded files
+- [ ] New announcement with an attachment — attachment downloads from the announcement page
 
 ---
 

@@ -27,7 +27,7 @@ export default function AnnouncementsPage() {
         const supabase = createClient();
         const { data } = await supabase
           .from('announcements')
-          .select('*, author:author_id(full_name)')
+          .select('*')
           .order('is_pinned', { ascending: false })
           .order('created_at', { ascending: false });
         if (data && data.length > 0) {

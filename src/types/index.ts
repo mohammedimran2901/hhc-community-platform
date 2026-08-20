@@ -18,6 +18,16 @@ export interface Profile {
   created_at: string;
 }
 
+export interface AnnouncementAttachment {
+  id: string;
+  announcement_id: string;
+  file_path: string;
+  file_name: string;
+  file_size: number | null;
+  mime_type: string | null;
+  created_at: string;
+}
+
 export interface Announcement {
   id: string;
   title: string;
@@ -26,8 +36,25 @@ export interface Announcement {
   author?: Profile;
   category: 'guidance' | 'update' | 'training' | 'policy';
   is_pinned: boolean;
+  attachments?: AnnouncementAttachment[];
   created_at: string;
   updated_at: string;
+}
+
+export type ResourceCategory = 'template' | 'guidance' | 'policy' | 'training' | 'other';
+
+export interface Resource {
+  id: string;
+  name: string;
+  description: string | null;
+  category: ResourceCategory;
+  file_path: string;
+  file_name: string;
+  file_size: number | null;
+  mime_type: string | null;
+  uploaded_by: string | null;
+  uploader?: { id: string; full_name: string } | null;
+  created_at: string;
 }
 
 export interface ForumThread {

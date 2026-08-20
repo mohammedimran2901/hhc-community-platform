@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getStoredAnnouncements, saveAnnouncement, deleteAnnouncement, togglePinAnnouncement } from '@/lib/local-data';
+import { AttachmentPicker } from '@/components/AttachmentPicker';
 import { Plus, Pin, PinOff, Trash2, Loader2, Bell, X } from 'lucide-react';
 
 export default function AdminAnnouncementsPage() {
@@ -10,7 +11,9 @@ export default function AdminAnnouncementsPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<'guidance' | 'update' | 'training' | 'policy'>('guidance');
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -23,10 +26,60 @@ export default function AdminAnnouncementsPage() {
     setError(null);
     if (!title.trim() || !content.trim()) { setError('Title and content are required'); return; }
     setLoading(true);
+
+    // Demo mode: always save locally
     saveAnnouncement({ title: title.trim(), content: content.trim(), category, author: 'Admin' });
-    setTitle(''); setContent(''); setCategory('guidance'); setShowForm(false);
-    setSuccessMsg('Announcement created!');
-    setTimeout(() => setSuccessMsg(null), 3000);
+
+    // Supabase: persist + upload attachments when signed in
+    const warnings: string[] = [];
+    try {
+      const { getClient } = await import('@/lib/supabase/client-lazy');
+      const supabase = await getClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: created, error: insertError } = await supabase
+          .from('announcements')
+          .insert({
+            title: title.trim(),
+            content: content.trim(),
+            category,
+            author_id: user.id,
+          })
+          .select('id')
+          .single();
+
+        if (!insertError && created && attachments.length > 0) {
+          for (let i = 0; i < attachments.length; i++) {
+            setProgress(`Uploading attachment ${i + 1} of ${attachments.length}...`);
+            try {
+              const form = new FormData();
+              form.append('file', attachments[i]);
+              form.append('announcement_id', created.id);
+              const res = await fetch('/api/admin/files', { method: 'POST', body: form });
+              if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                warnings.push(`${attachments[i].name}: ${data.error || 'upload failed'}`);
+              }
+            } catch {
+              warnings.push(`${attachments[i].name}: upload failed`);
+            }
+          }
+        }
+      } else if (attachments.length > 0) {
+        warnings.push('Attachments require sign-in and were skipped (saved locally only).');
+      }
+    } catch {
+      // Supabase not available — demo mode only
+    }
+
+    setTitle(''); setContent(''); setCategory('guidance'); setAttachments([]); setShowForm(false);
+    setProgress('');
+    setSuccessMsg(
+      warnings.length > 0
+        ? `Announcement created, but ${warnings.length} attachment(s) failed: ${warnings.join('; ')}`
+        : 'Announcement created!'
+    );
+    setTimeout(() => setSuccessMsg(null), 5000);
     refresh();
     setLoading(false);
   };
@@ -92,8 +145,12 @@ export default function AdminAnnouncementsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
               <textarea value={content} onChange={e => setContent(e.target.value)} rows={6} className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-y" placeholder="Write the announcement content..." />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Attachments <span className="text-gray-400 font-normal">(optional)</span></label>
+              <AttachmentPicker files={attachments} onChange={setAttachments} maxFiles={5} disabled={loading} />
+            </div>
             <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publish Announcement'}
+              {loading ? (<><Loader2 className="w-5 h-5 animate-spin" /> {progress || 'Publishing...'}</>) : 'Publish Announcement'}
             </button>
           </form>
         </div>
