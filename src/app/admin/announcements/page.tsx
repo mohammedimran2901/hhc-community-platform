@@ -17,7 +17,32 @@ export default function AdminAnnouncementsPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const refresh = () => setAnnouncements(getStoredAnnouncements());
+  const refresh = async () => {
+    // Try Supabase first; fall back to localStorage
+    try {
+      const { getClient } = await import('@/lib/supabase/client-lazy');
+      const supabase = await getClient();
+      const { data } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (data && data.length > 0) {
+        setAnnouncements(data.map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          content: a.content,
+          author: 'HHC Admin',
+          category: a.category,
+          is_pinned: a.is_pinned,
+          created_at: a.created_at,
+        })));
+        return;
+      }
+    } catch {
+      // Supabase not available
+    }
+    setAnnouncements(getStoredAnnouncements());
+  };
 
   useEffect(() => { refresh(); }, []);
 
@@ -27,11 +52,10 @@ export default function AdminAnnouncementsPage() {
     if (!title.trim() || !content.trim()) { setError('Title and content are required'); return; }
     setLoading(true);
 
-    // Demo mode: always save locally
-    saveAnnouncement({ title: title.trim(), content: content.trim(), category, author: 'Admin' });
-
-    // Supabase: persist + upload attachments when signed in
     const warnings: string[] = [];
+    let supabaseCreated = false;
+
+    // Try Supabase first
     try {
       const { getClient } = await import('@/lib/supabase/client-lazy');
       const supabase = await getClient();
@@ -48,28 +72,37 @@ export default function AdminAnnouncementsPage() {
           .select('id')
           .single();
 
-        if (!insertError && created && attachments.length > 0) {
-          for (let i = 0; i < attachments.length; i++) {
-            setProgress(`Uploading attachment ${i + 1} of ${attachments.length}...`);
-            try {
-              const form = new FormData();
-              form.append('file', attachments[i]);
-              form.append('announcement_id', created.id);
-              const res = await fetch('/api/admin/files', { method: 'POST', body: form });
-              if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                warnings.push(`${attachments[i].name}: ${data.error || 'upload failed'}`);
+        if (!insertError && created) {
+          supabaseCreated = true;
+
+          if (attachments.length > 0) {
+            for (let i = 0; i < attachments.length; i++) {
+              setProgress(`Uploading attachment ${i + 1} of ${attachments.length}...`);
+              try {
+                const form = new FormData();
+                form.append('file', attachments[i]);
+                form.append('announcement_id', created.id);
+                const res = await fetch('/api/admin/files', { method: 'POST', body: form });
+                if (!res.ok) {
+                  const data = await res.json().catch(() => ({}));
+                  warnings.push(`${attachments[i].name}: ${data.error || 'upload failed'}`);
+                }
+              } catch {
+                warnings.push(`${attachments[i].name}: upload failed`);
               }
-            } catch {
-              warnings.push(`${attachments[i].name}: upload failed`);
             }
           }
         }
       } else if (attachments.length > 0) {
-        warnings.push('Attachments require sign-in and were skipped (saved locally only).');
+        warnings.push('Attachments require sign-in and were skipped.');
       }
     } catch {
-      // Supabase not available — demo mode only
+      // Supabase not available
+    }
+
+    // Only save to localStorage if Supabase didn't handle it
+    if (!supabaseCreated) {
+      saveAnnouncement({ title: title.trim(), content: content.trim(), category, author: 'Admin' });
     }
 
     setTitle(''); setContent(''); setCategory('guidance'); setAttachments([]); setShowForm(false);

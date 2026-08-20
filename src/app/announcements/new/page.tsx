@@ -38,11 +38,9 @@ export default function NewAnnouncementPage() {
 
     setLoading(true);
     const warnings: string[] = [];
+    let supabaseCreated = false;
 
-    // Save to localStorage for demo mode
-    saveAnnouncement({ title: title.trim(), content: content.trim(), category, author: author.trim() });
-
-    // Also try Supabase if configured
+    // Try Supabase first
     try {
       const { getClient } = await import('@/lib/supabase/client-lazy');
       const supabase = await getClient();
@@ -59,21 +57,25 @@ export default function NewAnnouncementPage() {
           .select('id')
           .single();
 
-        // Upload attachments (admin only — enforced by /api/admin/files)
-        if (!insertError && created && attachments.length > 0) {
-          for (let i = 0; i < attachments.length; i++) {
-            setProgress(`Uploading attachment ${i + 1} of ${attachments.length}...`);
-            try {
-              const form = new FormData();
-              form.append('file', attachments[i]);
-              form.append('announcement_id', created.id);
-              const res = await fetch('/api/admin/files', { method: 'POST', body: form });
-              if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                warnings.push(`${attachments[i].name}: ${data.error || 'upload failed'}`);
+        if (!insertError && created) {
+          supabaseCreated = true;
+
+          // Upload attachments (admin only — enforced by /api/admin/files)
+          if (attachments.length > 0) {
+            for (let i = 0; i < attachments.length; i++) {
+              setProgress(`Uploading attachment ${i + 1} of ${attachments.length}...`);
+              try {
+                const form = new FormData();
+                form.append('file', attachments[i]);
+                form.append('announcement_id', created.id);
+                const res = await fetch('/api/admin/files', { method: 'POST', body: form });
+                if (!res.ok) {
+                  const data = await res.json().catch(() => ({}));
+                  warnings.push(`${attachments[i].name}: ${data.error || 'upload failed'}`);
+                }
+              } catch {
+                warnings.push(`${attachments[i].name}: upload failed`);
               }
-            } catch {
-              warnings.push(`${attachments[i].name}: upload failed`);
             }
           }
         }
@@ -81,7 +83,12 @@ export default function NewAnnouncementPage() {
         warnings.push('Attachments require an admin sign-in and were skipped.');
       }
     } catch {
-      // Supabase not available - demo mode
+      // Supabase not available — will fall back to localStorage
+    }
+
+    // Only save to localStorage if Supabase didn't handle it (demo mode)
+    if (!supabaseCreated) {
+      saveAnnouncement({ title: title.trim(), content: content.trim(), category, author: author.trim() });
       if (attachments.length > 0) {
         warnings.push('Attachments are only available when connected to Supabase.');
       }

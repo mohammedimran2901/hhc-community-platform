@@ -22,10 +22,53 @@ export default function DashboardPage() {
   const [polls, setPolls] = useState<any[]>([]);
 
   useEffect(() => {
-    setStats(getCommunityStats());
-    setAnnouncements(getStoredAnnouncements());
-    setThreads(getStoredThreads());
-    setPolls(getStoredPolls());
+    async function loadData() {
+      // Try Supabase first
+      try {
+        const { getClient } = await import('@/lib/supabase/client-lazy');
+        const supabase = await getClient();
+        const [annRes, threadRes] = await Promise.all([
+          supabase.from('announcements').select('*').order('created_at', { ascending: false }).limit(3),
+          supabase.from('forum_threads').select('*').order('created_at', { ascending: false }).limit(3),
+        ]);
+
+        if (annRes.data && annRes.data.length > 0) {
+          setAnnouncements(annRes.data.map((a: any) => ({
+            id: a.id,
+            title: a.title,
+            content: a.content,
+            author: 'HHC',
+            category: a.category,
+            is_pinned: a.is_pinned,
+            created_at: a.created_at,
+          })));
+        } else {
+          setAnnouncements(getStoredAnnouncements());
+        }
+
+        if (threadRes.data && threadRes.data.length > 0) {
+          setThreads(threadRes.data.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            content: t.content,
+            author: 'Community Member',
+            clusterName: null,
+            is_resolved: t.is_resolved,
+            created_at: t.created_at,
+          })));
+        } else {
+          setThreads(getStoredThreads());
+        }
+      } catch {
+        // Supabase not available — fall back to localStorage
+        setAnnouncements(getStoredAnnouncements());
+        setThreads(getStoredThreads());
+      }
+
+      setStats(getCommunityStats());
+      setPolls(getStoredPolls());
+    }
+    loadData();
   }, []);
 
   const statValues: Record<string, string | number> = {

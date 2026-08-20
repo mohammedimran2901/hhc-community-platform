@@ -17,11 +17,12 @@ export default function AnnouncementsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const local = getStoredAnnouncements();
-    setAnnouncements(local);
-    setLoading(false);
+    async function loadAnnouncements() {
+      // Start with localStorage as the baseline
+      const local = getStoredAnnouncements();
 
-    async function fetchSupabase() {
+      // Try Supabase — if it returns data, use Supabase data only
+      // (avoids duplicate entries from demo-* IDs conflicting with UUIDs)
       try {
         const { createClient } = await import('@/lib/supabase/client');
         const supabase = createClient();
@@ -35,16 +36,23 @@ export default function AnnouncementsPage() {
             id: a.id,
             title: a.title,
             content: a.content,
-            author: a.author?.full_name || 'HHC',
+            author: 'HHC',
             category: a.category,
             is_pinned: a.is_pinned,
             created_at: a.created_at,
           }));
-          setAnnouncements([...local, ...mapped.filter((m: any) => !local.find((l: any) => l.id === m.id))]);
+          setAnnouncements(mapped);
+          setLoading(false);
+          return;
         }
-      } catch {}
+      } catch {
+        // Supabase not configured — fall back to localStorage
+      }
+
+      setAnnouncements(local);
+      setLoading(false);
     }
-    fetchSupabase();
+    loadAnnouncements();
   }, []);
 
   return (
@@ -68,7 +76,7 @@ export default function AnnouncementsPage() {
       ) : announcements.length > 0 ? (
         <div className="space-y-4">
           {announcements.map((a: any) => (
-            <div key={a.id} className="block bg-white rounded-xl border border-gray-200 p-6 hover:border-blue-200 hover:shadow-sm transition-all">
+            <Link key={a.id} href={`/announcements/${a.id}`} className="block bg-white rounded-xl border border-gray-200 p-6 hover:border-blue-200 hover:shadow-sm transition-all">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
@@ -86,7 +94,7 @@ export default function AnnouncementsPage() {
                 <span>{new Date(a.created_at).toLocaleDateString()}</span>
                 <span>By {a.author || 'HHC'}</span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       ) : (
