@@ -78,6 +78,74 @@ export async function PATCH(
 }
 
 /**
+ * PUT /api/admin/users/[id]
+ * Sets a new password for a user (admin password reset).
+ * Useful when the user's self-service "forgot password" flow fails.
+ */
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    // Verify the requesting user is an admin
+    const { error: authError } = await verifyAdmin(request);
+    if (authError) {
+      return NextResponse.json({ error: authError }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { password } = body;
+
+    if (!password || typeof password !== 'string') {
+      return NextResponse.json(
+        { error: 'Password is required' },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters' },
+        { status: 400 }
+      );
+    }
+
+    const adminClient = createAdminClient();
+
+    // Make sure the target user exists
+    const { data: targetUser, error: getUserError } =
+      await adminClient.auth.admin.getUserById(id);
+
+    if (getUserError || !targetUser?.user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(
+      id,
+      { password }
+    );
+
+    if (updateError) {
+      console.error('Error resetting password:', updateError);
+      return NextResponse.json(
+        { error: updateError.message || 'Failed to reset password' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Unexpected error in PUT /api/admin/users/[id]:', err);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/admin/users/[id]
  * Removes a user from the platform (deletes auth user and profile).
  */

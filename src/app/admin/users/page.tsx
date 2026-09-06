@@ -18,6 +18,10 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  KeyRound,
+  Copy,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 interface AdminUser {
@@ -64,6 +68,15 @@ export default function AdminUsersPage() {
   // Role edit state
   const [editingRole, setEditingRole] = useState<string | null>(null);
   const [newRoleValue, setNewRoleValue] = useState<string>('member');
+
+  // Reset password modal
+  const [resetTarget, setResetTarget] = useState<AdminUser | null>(null);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetConfirmPassword, setResetConfirmPassword] = useState('');
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -200,6 +213,69 @@ export default function AdminUsersPage() {
     } catch (err: any) {
       setError(err.message);
     }
+  };
+
+  const generatePassword = () => {
+    // Pronounceable-ish strong password, e.g. "Hhc-k7Qm-2xPz!"
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    const symbols = '!@#$%&*';
+    let pw = '';
+    const random = typeof crypto !== 'undefined' && crypto.getRandomValues
+      ? (max: number) => crypto.getRandomValues(new Uint32Array(1))[0] % max
+      : () => Math.floor(Math.random() * 4294967296) % 4294967296;
+    for (let i = 0; i < 10; i++) pw += chars[random(chars.length)];
+    pw = pw.slice(0, 3) + '-' + pw.slice(3, 6) + '-' + pw.slice(6, 10);
+    pw += symbols[random(symbols.length)] + Math.floor(random(10));
+    setResetPassword(pw);
+    setResetConfirmPassword(pw);
+    setShowResetPassword(true);
+    setResetSuccess(false);
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetTarget) return;
+    setResetError(null);
+    setResetSuccess(false);
+
+    if (resetPassword.length < 6) {
+      setResetError('Password must be at least 6 characters');
+      return;
+    }
+    if (resetPassword !== resetConfirmPassword) {
+      setResetError('Passwords do not match');
+      return;
+    }
+
+    setResetting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${resetTarget.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: resetPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to reset password');
+      }
+
+      setResetSuccess(true);
+    } catch (err: any) {
+      setResetError(err.message);
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const closeResetModal = () => {
+    setResetTarget(null);
+    setResetPassword('');
+    setResetConfirmPassword('');
+    setResetError(null);
+    setResetSuccess(false);
+    setShowResetPassword(false);
   };
 
   const getClusterName = (clusterId: string | null) => {
@@ -393,13 +469,28 @@ export default function AdminUsersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setDeleteTarget(u)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete user"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => {
+                          setResetTarget(u);
+                          setResetPassword('');
+                          setResetConfirmPassword('');
+                          setResetError(null);
+                          setResetSuccess(false);
+                        }}
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Set / reset password"
+                      >
+                        <KeyRound className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget(u)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete user"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -527,6 +618,146 @@ export default function AdminUsersPage() {
                     'Create User'
                   )}
                 </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {resetTarget && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <KeyRound className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-lg font-bold text-gray-900">Set New Password</h2>
+                </div>
+                <button
+                  onClick={closeResetModal}
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-500 mb-4">
+                Set a new password for{' '}
+                <strong>{resetTarget.full_name || resetTarget.email}</strong>{' '}
+                <span className="text-gray-400">({resetTarget.email})</span>. Share it with
+                them directly — they can change it after logging in.
+              </p>
+
+              {resetError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+                  {resetError}
+                </div>
+              )}
+
+              {resetSuccess && (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg mb-4 text-sm">
+                  Password updated successfully. The user can now log in with the new
+                  password.
+                </div>
+              )}
+
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      New Password <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={generatePassword}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Generate
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showResetPassword ? 'text' : 'password'}
+                      value={resetPassword}
+                      onChange={(e) => {
+                        setResetPassword(e.target.value);
+                        setResetSuccess(false);
+                      }}
+                      required
+                      minLength={6}
+                      className="w-full px-4 py-2.5 pr-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      placeholder="At least 6 characters"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowResetPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      title={showResetPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showResetPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type={showResetPassword ? 'text' : 'password'}
+                    value={resetConfirmPassword}
+                    onChange={(e) => {
+                      setResetConfirmPassword(e.target.value);
+                      setResetSuccess(false);
+                    }}
+                    required
+                    minLength={6}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    placeholder="Re-enter the password"
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard?.writeText(resetPassword)}
+                  disabled={!resetPassword}
+                  className="text-xs text-gray-500 hover:text-gray-700 font-medium flex items-center gap-1 disabled:opacity-40"
+                >
+                  <Copy className="w-3.5 h-3.5" /> Copy password to clipboard
+                </button>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeResetModal}
+                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors"
+                  >
+                    {resetSuccess ? 'Done' : 'Cancel'}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetting}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {resetting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                      </>
+                    ) : (
+                      'Update Password'
+                    )}
+                  </button>
+                </div>
+
               </form>
             </div>
           </div>
